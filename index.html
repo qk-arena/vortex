@@ -313,6 +313,48 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
 }
 .refresh-btn:disabled { color: var(--weak); cursor: default; }
 
+/* ---------------- 账号 / 邀请 / 服务端追踪 ---------------- */
+.fld { display: block; margin-top: 10px; }
+.fld .k { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+.inp {
+  width: 100%; box-sizing: border-box; background: var(--panel-inset);
+  border: 1px solid var(--line); border-radius: 9px; color: var(--text);
+  font-size: 14px; padding: 10px 11px; outline: none;
+}
+.inp:focus { border-color: var(--accent); }
+.code-row { display: flex; gap: 8px; }
+.code-row .inp { flex: 1; }
+.code-row .btn-line { flex: none; }
+.btn-accent {
+  background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent);
+  border-radius: 9px; font-size: 13.5px; font-weight: 700; padding: 10px 16px; cursor: pointer;
+}
+.btn-accent:disabled { opacity: .55; cursor: default; }
+.btn-line {
+  background: transparent; color: var(--text-secondary); border: 1px solid var(--line-strong);
+  border-radius: 9px; font-size: 12.5px; padding: 8px 12px; cursor: pointer;
+}
+.btn-line:disabled { color: var(--weak); cursor: default; }
+.form-msg { font-size: 12.5px; margin-top: 10px; min-height: 15px; color: var(--muted); }
+.form-msg.err { color: var(--down); }
+.form-msg.ok { color: var(--up); }
+.kv-line { display: flex; align-items: center; gap: 8px; margin-top: 9px; font-size: 13px; }
+.kv-line .k { color: var(--muted); font-size: 12px; flex: none; }
+.kv-line .v { font-weight: 700; word-break: break-all; }
+.kv-line .btn-line { margin-left: auto; flex: none; padding: 4px 10px; }
+.advice-blk { background: var(--panel-inset); border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px; margin-top: 10px; }
+.advice-blk .a-row { font-size: 12.5px; color: var(--text-secondary); margin-top: 5px; line-height: 1.55; }
+.advice-blk .a-row b { color: var(--text); }
+.round-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.round-head .sym { font-size: 15px; font-weight: 800; }
+.round-prices { font-size: 12.5px; color: var(--text-secondary); margin-top: 7px; }
+.round-prices b { color: var(--text); }
+.hist-line { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; padding: 7px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.hist-line:last-child { border-bottom: none; }
+.hist-line .sym { font-weight: 800; color: var(--text); }
+.hist-line .dim { color: var(--muted); }
+.hist-line .r { margin-left: auto; font-weight: 700; }
+
 </style>
 </head>
 <body>
@@ -352,6 +394,10 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       <div class="blk"><p class="progress-line">扫描尚未运行。打开「今日」页会自动扫描；也可以点下方按钮立即扫描。</p>
       <p style="margin-top:10px"><button class="refresh-btn" id="signals-run">立即扫描</button></p></div>
     </div>
+    <div class="zhead"><h2>AI追踪</h2><span class="en">AI Tracking</span><span class="right" id="tracking-updated"></span></div>
+    <div class="stack" id="tracking-root">
+      <div class="blk"><p class="progress-line">正在读取服务端追踪账本…</p></div>
+    </div>
   </section>
 
   <!-- ================= 市场 MARKET ================= -->
@@ -363,6 +409,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
 
   <!-- ================= 我的 ME ================= -->
   <section class="view" id="view-me">
+    <div id="me-account-root"></div>
     <div class="zhead"><h2>关于与口径</h2><span class="en">About &amp; Method</span></div>
     <div class="stack">
       <div class="blk doc-blk">
@@ -395,13 +442,13 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       </div>
       <div class="blk doc-blk">
         <h3>数据从哪来</h3>
-        <p>全部由你的浏览器直连公开接口，本站没有服务器代取：币安现货与 U 本位合约官方 REST（多主机依次回退，K 线预算 2200ms、行情 1800ms）；市值排名 CoinGecko / CoinLore / CoinPaprika；恐惧贪婪指数 Alternative.me；BTC 市占率 CoinGecko / CoinPaprika 全球数据。每个数字都带抓取时间；页面显示的时间为北京时间。</p>
+        <p>行情全部由你的浏览器直连公开接口，本站没有服务器代取：币安现货与 U 本位合约官方 REST（多主机依次回退，K 线预算 2200ms、行情 1800ms）；市值排名 CoinGecko / CoinLore / CoinPaprika；恐惧贪婪指数 Alternative.me；BTC 市占率 CoinGecko / CoinPaprika 全球数据。每个数字都带抓取时间；页面显示的时间为北京时间。例外只有两项：账号与 AI 追踪账本读服务端版接口，因为这两项本来就只存在于服务端。</p>
         <p>全球指数来自腾讯行情公开接口（指数报价与日线收盘历史）；A 股 / 美股价格温度为本站模型，用上证指数与标普500的日线收盘在本页内计算。MVRV-Z 需要链上已实现市值数据，尚无已授权且可核验的浏览器可直连来源，市场页已不展示该块，不从价格曲线猜测。爆仓数据没有公开的历史汇总接口：静态版尝试用币安合约爆仓事件流在本页打开期间实时观察并明确标注样本口径，连不上时显示暂无可靠数据源。</p>
       </div>
       <div class="blk doc-blk">
         <h3>静态版与服务端版的差异</h3>
         <ul>
-          <li>没有账号与注册：静态版不做登录、不保存任何个人信息。</li>
+          <li>账号与 AI 追踪共用服务端版：本页的注册、登录、邀请与追踪板块直接读写服务端版的账号库与追踪账本；服务端不可达时追踪回退为币页的本地规则现算并明确标注，账号功能暂停并明示。</li>
           <li>没有发布冻结：服务端版把通过核验的计划写入数据库冻结存档；静态版每次打开实时重算，计划随最新收盘滚动。</li>
           <li>没有每日观点扫描：观点页只有注册名单与主页链接。</li>
           <li>没有服务器扫描预算：服务端单轮 25 秒截止、并发 3、池轮转；静态版在浏览器内跑完为止（并发 6），诊断计数口径一致。</li>
@@ -412,6 +459,13 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         <p>本页所有内容是数据与规则的机械呈现，不构成投资建议。加密货币波动剧烈，计划中的止损、失效条件是规则的一部分，不是收益保证。执行前请回到交易所核对最新价格与合约状态。</p>
         <p class="dim">VORTEX 静态版 · 数据源与抓取时间标注于各页 · 页面版本随源码仓库更新。</p>
       </div>
+    </div>
+  </section>
+
+  <!-- ================= 机会详情 PLAN ================= -->
+  <section class="view" id="view-plan">
+    <div class="stack" id="plan-root">
+      <div class="blk"><p class="progress-line">正在定位这条机会…</p></div>
     </div>
   </section>
 
@@ -1908,7 +1962,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     return S.scanPromise;
   }
   function rescan() {
-    S.scans = {}; S.selection = null; S.scanPromise = null; S.scanProgress = {};
+    S.scans = {}; S.selection = null; S.scanPromise = null; S.scanProgress = {}; planByKey = {};
     S.corePromise = null; S.coreReady = false; S.overview = null; S.overviewStatus = 'loading';
     S.snapshot = null; S.spotTicker = null; S.webProducts = null; S.premium = null; S.aggregatedFunding = null;
     renderToday(); renderSignals();
@@ -1923,15 +1977,21 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   function actionableCount(plans, now) {
     return plans.filter(function (p) { return VX.opportunityView(p, now).actionable; }).length;
   }
+  /* 机会卡 = 紧凑摘要块：一币一卡、独立成块；点开进详情页看完整信息。
+   * 注册表按内容键（币种|周期|收盘时间）存计划对象，详情路由据此找回。 */
+  var planByKey = {};
+  function planKey(plan) { return plan.symbol + '|' + plan.horizon + '|' + (plan.closedAt || ''); }
+  function planProduct(plan) { return plan.market === 'futures' ? '币安 U 本位永续合约' : '币安现货'; }
+  function planHorizonLabel(plan) { return plan.horizon === '1d' ? '日线 1D' : plan.horizon === '12h' ? '12 小时 12H' : String(plan.horizon).toUpperCase(); }
   function planCard(plan, now) {
     var view = VX.opportunityView(plan, now);
     var actionable = view.actionable;
     var dirClass = plan.direction === '做多' ? 'long' : plan.direction === '做空' ? 'short' : 'flat';
-    var product = plan.market === 'futures' ? '币安 U 本位永续合约' : '币安现货';
-    var horizonLabel = plan.horizon === '1d' ? '日线 1D' : plan.horizon === '12h' ? '12 小时 12H' : plan.horizon.toUpperCase();
-    var html = '<article class="blk plan-card">';
+    var key = planKey(plan);
+    planByKey[key] = plan;
+    var html = '<article class="blk plan-card tap" onclick="window.__vxPlan(\'' + esc(key) + '\')">';
     html += '<div class="plan-top"><div class="plan-id">' + coinLogoHtml(plan.symbol, 'plan') +
-      '<div class="plan-name">' + esc(plan.symbol) + '<small>' + esc(product) + ' · ' + esc(horizonLabel) + '</small></div></div>' +
+      '<div class="plan-name">' + esc(plan.symbol) + '<small>' + esc(planProduct(plan)) + ' · ' + esc(planHorizonLabel(plan)) + '</small></div></div>' +
       '<div class="plan-score"><b>' + plan.score + '</b><small>执行证据分</small></div></div>';
     html += '<div class="tag-row"><span class="badge ' + dirClass + '">' + esc(plan.direction) + '</span>' +
       '<span class="pill ' + (actionable ? 'ok' : 'warn') + '">' + (actionable ? '本轮规则通过' : '仅观察 · 不入场') + '</span>' +
@@ -1939,27 +1999,130 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     if (!actionable) {
       html += '<p class="wait-line">' + esc(view.label) + '</p>';
     } else {
-      html += '<div class="price-grid">' +
-        '<div class="cell"><span>入场区</span><b>' + fmtPrice(plan.entryLow) + ' – ' + fmtPrice(plan.entryHigh) + '</b></div>' +
+      html += '<div class="round-prices">入场区 <b>' + fmtPrice(plan.entryLow) + ' – ' + fmtPrice(plan.entryHigh) + '</b> · 止损 <b>' + fmtPrice(plan.stopLoss) + '</b></div>';
+    }
+    html += '<div class="round-prices">现价 <b>' + fmtPrice(plan.price) + '</b>（' + fmtChange(plan.change24h) + '） · 数据完整度 <b>' + plan.confidence + '%</b> · 有效期至 ' + fmtTime(Date.parse(plan.validUntil)) + '</div>';
+    html += '<p class="plan-meta">点开查看完整信息：五问明细、全部依据、风控与未来走势展望</p>';
+    html += '</article>';
+    return html;
+  }
+  window.__vxPlan = function (key) {
+    var target = '#/plan/' + encodeURIComponent(key);
+    if (location.hash === target) applyRoute('plan', key);
+    else location.hash = target;
+  };
+
+  /* ---------------- 机会详情（完整信息，按五问顺序） ---------------- */
+  function trackStateFor(symbol) {
+    if (S.tracking && S.tracking.board) {
+      var found = null;
+      (S.tracking.board.monitors || []).forEach(function (m) { (m.rows || []).forEach(function (r) { if (r.symbol === symbol) found = r; }); });
+      if (!found && S.tracking.board.watch) S.tracking.board.watch.forEach(function (r) { if (r.symbol === symbol) found = r; });
+      if (found) return (MONITOR_SHORT[found.monitor] || '') + ' · ' + (found.stage === 'watch' ? '观察期' : '进行中') + ' · 推送价 ' + fmtPrice(found.entry_price);
+    }
+    var c = coinTrackCache[symbol];
+    if (c && c.status === 'done' && c.data && c.data.rounds) {
+      var open = c.data.rounds.filter(function (r) { return r.status === 'open'; })[0];
+      if (open) return (MONITOR_SHORT[open.monitor] || '') + ' · 进行中 · 推送价 ' + fmtPrice(open.entry_price);
+    }
+    return null;
+  }
+  function outlookHtml(plan, actionable) {
+    var bias = plan.direction === '做多' ? '偏多' : plan.direction === '做空' ? '偏空' : '震荡';
+    var biasCls = bias === '偏多' ? 'v-up' : bias === '偏空' ? 'v-down' : '';
+    var long = plan.direction === '做多';
+    var html = '<div class="zhead"><h2>未来走势展望</h2><span class="en">Outlook</span><span class="right">模型展望 · 非预测价</span></div><div class="blk">';
+    html += '<div class="zlabel"><span>未来数日到数周方向倾向</span><span class="badge ' + (long ? 'long' : plan.direction === '做空' ? 'short' : 'flat') + '" style="margin-left:auto">' + bias + '</span></div>';
+    html += '<div class="a-row" style="font-size:12.5px;color:var(--text-secondary);margin-top:8px;line-height:1.55">依据：证据类别 ' + esc((plan.evidence || []).join('、') || '无') +
+      '；模型评分 <b style="color:var(--text)">' + (plan.modelScore != null ? plan.modelScore : plan.score) + '</b>，数据完整度 <b style="color:var(--text)">' + plan.confidence + '%</b>。' +
+      '倾向来自上方「依据」里的趋势结构、动量与衍生品证据，是规则的机械合成，不是人工观点。</div>';
+    var track = trackStateFor(plan.symbol);
+    if (track) html += '<div class="a-row" style="font-size:12.5px;color:var(--text-secondary);margin-top:5px">AI 追踪监控状态：' + esc(track) + '。</div>';
+    if (actionable) {
+      html += '<div class="a-row" style="font-size:12.5px;color:var(--text-secondary);margin-top:5px">' +
+        (long ? '上方关键位（模型目标 TP1 / TP2）：' : '下方关键位（模型目标 TP1 / TP2）：') + '<b style="color:var(--text)">' + fmtPrice(plan.tp1) + ' / ' + fmtPrice(plan.tp2) + '</b>；' +
+        (long ? '下方关键位（止损）：' : '上方关键位（止损）：') + '<b style="color:var(--text)">' + fmtPrice(plan.stopLoss) + '</b>。</div>';
+    }
+    html += '<div class="a-row" style="font-size:12.5px;color:var(--text-secondary);margin-top:5px">展望失效条件：' + esc(plan.invalidation || '—') + '。失效即倾向作废，不找补。</div>';
+    html += '<p class="plan-meta">本块只给方向倾向、依据与失效条件；模型不产出目标价预测，给出的价位只有计划本身的入场区、止盈与止损。</p>';
+    html += '</div>';
+    return html;
+  }
+  function planDetailHtml(plan, now) {
+    var view = VX.opportunityView(plan, now);
+    var actionable = view.actionable;
+    var dirClass = plan.direction === '做多' ? 'long' : plan.direction === '做空' ? 'short' : 'flat';
+    var html = '<div class="blk"><button class="refresh-btn" onclick="window.__vxGo(\'today\')">← 返回</button>' +
+      '<div class="plan-top" style="margin-top:12px"><div class="plan-id">' + coinLogoHtml(plan.symbol, 'plan') +
+      '<div class="plan-name">' + esc(plan.symbol) + '<small>' + esc(planProduct(plan)) + ' · ' + esc(planHorizonLabel(plan)) + '</small></div></div>' +
+      '<div class="plan-score"><b>' + plan.score + '</b><small>执行证据分</small></div></div>' +
+      '<div class="tag-row"><span class="badge ' + dirClass + '">' + esc(plan.direction) + '</span>' +
+      '<span class="pill ' + (actionable ? 'ok' : 'warn') + '">' + esc(view.label) + '</span>' +
+      '<span class="tag-note">评分非胜率</span></div></div>';
+
+    /* 一 · 方向 */
+    html += '<div class="zhead"><h2>一 · 方向</h2><span class="en">Direction</span></div><div class="blk">' +
+      '<div class="verdict-word ' + dirClass + '" style="font-size:24px">' + esc(plan.direction) + '</div>' +
+      '<p class="verdict-why">' + esc(view.label) + '</p>' +
+      '<p class="fact-line">模型规则分 <b>' + (plan.modelScore != null ? plan.modelScore : plan.score) + '</b> · 执行分 <b>' + plan.score + '</b> · 证据 <b>' + plan.evidenceCount + ' 类</b>：' + esc((plan.evidence || []).join(' · ') || '无') + '</p></div>';
+
+    /* 二 · 品种与产品 */
+    html += '<div class="zhead"><h2>二 · 品种与产品</h2><span class="en">Instrument</span></div><div class="blk">' +
+      '<div class="price-grid"><div class="cell"><span>币种</span><b>' + esc(plan.symbol) + '</b></div>' +
+      '<div class="cell"><span>交易产品</span><b>' + esc(planProduct(plan)) + '</b></div>' +
+      '<div class="cell"><span>现价</span><b>' + fmtPrice(plan.price) + '</b></div>' +
+      '<div class="cell"><span>24H 涨跌 / 成交</span><b>' + fmtChange(plan.change24h) + ' / ' + fmtUsd(plan.quoteVolume24h) + '</b></div></div></div>';
+
+    /* 三 · 时机 */
+    html += '<div class="zhead"><h2>三 · 时机</h2><span class="en">Timing</span></div><div class="blk">' +
+      '<p class="fact-line" style="margin-top:0">触发：<b>' + esc(planHorizonLabel(plan)) + '收盘确认后，按入场区执行</b>；确认价 <b>' + fmtPrice(plan.confirmationPrice) + '</b>。</p>' +
+      '<p class="fact-line">收盘冻结时间 <b>' + fmtTime(Date.parse(plan.closedAt)) + '</b> · 报价时间 <b>' + fmtTime(Date.parse(plan.updatedAt)) + '</b> · 有效期至 <b>' + fmtTime(Date.parse(plan.validUntil)) + '</b>（北京时间，过期作废）</p></div>';
+
+    /* 四 · 价格 */
+    html += '<div class="zhead"><h2>四 · 价格</h2><span class="en">Price</span></div><div class="blk">';
+    if (actionable) {
+      html += '<div class="price-grid"><div class="cell"><span>入场区</span><b>' + fmtPrice(plan.entryLow) + ' – ' + fmtPrice(plan.entryHigh) + '</b></div>' +
         '<div class="cell"><span>确认价</span><b>' + fmtPrice(plan.confirmationPrice) + '</b></div>' +
         '<div class="cell"><span>止盈 TP1 / TP2</span><b>' + fmtPrice(plan.tp1) + ' / ' + fmtPrice(plan.tp2) + '</b></div>' +
         '<div class="cell"><span>止损位 · SL</span><b>' + fmtPrice(plan.stopLoss) + '</b></div></div>';
-      html += '<p class="fact-line">触发：' + esc(horizonLabel) + '收盘确认后，按入场区执行；<b>失效条件</b>：' + esc(plan.invalidation) + '</p>';
+    } else {
+      html += '<p class="wait-line">' + esc(view.label) + '</p>' +
+        '<p class="fact-line">未通过执行门的计划不生成入场区、止盈与止损参数——只给方向、评分与被拦原因，不凑数。</p>';
     }
-    html += '<p class="fact-line">本轮规则分 <b>' + (plan.modelScore != null ? plan.modelScore : plan.score) + '</b> · 执行分 <b>' + plan.score + '</b> · 数据完整度 <b>' + plan.confidence + '%</b>（均不是胜率） · 24H 成交 <b>' + fmtUsd(plan.quoteVolume24h) + '</b> · 现价 <b>' + fmtPrice(plan.price) + '</b>（' + fmtChange(plan.change24h) + '）</p>';
-    if (!actionable && plan.blockedReasons && plan.blockedReasons.length) {
+    html += '</div>';
+
+    /* 五 · 风控与数据状态 */
+    html += '<div class="zhead"><h2>五 · 风控</h2><span class="en">Risk &amp; Data</span></div><div class="blk">' +
+      '<p class="fact-line" style="margin-top:0">失效条件：<b>' + esc(plan.invalidation || '—') + '</b></p>';
+    if (plan.blockedReasons && plan.blockedReasons.length) {
       html += '<p class="fact-line" style="margin-bottom:2px">被拦原因（写在脸上）：</p><ul class="blocked-list">' +
         plan.blockedReasons.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>';
     }
-    html += '<details class="fold"><summary>查看依据（' + plan.evidenceCount + ' 类证据）</summary><div class="fold-body">' +
-      '<p>证据：' + esc(plan.evidence.join(' · ') || '无') + '</p>' +
-      plan.reasons.map(function (r) { return '<p>' + esc(r) + '</p>'; }).join('') +
-      (plan.contradictions && plan.contradictions.length ? '<p>矛盾项：' + esc(plan.contradictions.join('；')) + '</p>' : '') +
-      '</div></details>';
-    html += '<p class="plan-meta">收盘 ' + fmtTime(Date.parse(plan.closedAt)) + ' · 报价 ' + fmtTime(Date.parse(plan.updatedAt)) +
-      ' · 有效期至 ' + fmtTime(Date.parse(plan.validUntil)) + ' · K 线来源 ' + esc(hostOf(plan.source)) + '（北京时间）</p>';
-    html += '</article>';
+    if (plan.contradictions && plan.contradictions.length) {
+      html += '<p class="fact-line">矛盾项：' + esc(plan.contradictions.join('；')) + '</p>';
+    }
+    html += '<p class="fact-line">数据状态：完整度 <b>' + plan.confidence + '%</b> · K 线来源 <b>' + esc(hostOf(plan.source)) + '</b> · 评分与完整度都不是胜率，止损与失效条件是规则的一部分，不是收益保证。</p></div>';
+
+    /* 依据（完整展开，不折叠截断） */
+    html += '<div class="zhead"><h2>依据</h2><span class="en">Evidence</span><span class="right">' + plan.evidenceCount + ' 类证据</span></div><div class="blk">' +
+      '<p class="fact-line" style="margin-top:0">证据：' + esc((plan.evidence || []).join(' · ') || '无') + '</p>' +
+      (plan.reasons || []).map(function (r) { return '<p class="fact-line">' + esc(r) + '</p>'; }).join('') + '</div>';
+
+    /* 未来走势展望 */
+    html += outlookHtml(plan, actionable);
     return html;
+  }
+  function renderPlanDetail() {
+    var root = document.getElementById('plan-root');
+    if (!root) return;
+    var plan = S.planKey ? planByKey[S.planKey] : null;
+    if (!plan) {
+      root.innerHTML = '<div class="blk"><button class="refresh-btn" onclick="window.__vxGo(\'today\')">← 返回</button>' +
+        '<p class="progress-line" style="margin-top:12px">正在定位这条机会：等本轮扫描把它算出来…</p></div>';
+      ensureScan();
+      return;
+    }
+    root.innerHTML = planDetailHtml(plan, Date.now());
   }
 
   function renderScanProgress() {
@@ -2009,12 +2172,20 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       '<p>上涨 ' + ov.breadth.up + ' · 下跌 ' + ov.breadth.down + ' · 平盘 ' + ov.breadth.unchanged + '（币安 USDT 现货全市场样本）</p>' +
       '<p>数据来源：' + esc(S.overviewSources) + '（完整口径见「我的」页）。</p></div></details></div>';
 
-    /* 四个独立统计块 */
+    /* 风险总闸紧跟定调（仅极端风险时单独成块） */
+    if (ov.risk.level === 'severe') {
+      html += '<div class="zhead"><h2>风险总闸</h2><span class="en">Risk Gate</span></div>' +
+        '<div class="blk"><div class="zlabel"><span>今日风险</span><em class="risk-chip severe">已触发</em></div>' +
+        '<p style="margin:8px 0 0;font-size:13px;color:var(--text-secondary)">' + esc(ov.risk.detail) + '</p></div>';
+    }
+
+    /* 证据层（统计块与脉搏）先攒到 evidenceHtml，排在机会区之后 */
+    var evidenceHtml = '';
     var btcA = ov.assets.find(function (a) { return a.symbol === 'BTC'; });
     var ethA = ov.assets.find(function (a) { return a.symbol === 'ETH'; });
     function trendWord(a) { return !a ? '—' : a.change24h > 0 ? '多头' : a.change24h < 0 ? '空头' : '震荡'; }
     function trendClass(a) { return !a ? '' : a.change24h > 0 ? 'v-up' : a.change24h < 0 ? 'v-down' : ''; }
-    html += '<div class="grid grid-4">' +
+    evidenceHtml += '<div class="grid grid-4">' +
       '<div class="blk stat-blk tap" onclick="window.__vxGo(\'market\')"><span class="k">市场宽度</span><span class="v">' + ov.breadth.upRatio.toFixed(1) + '%</span><span class="s">上涨 ' + ov.breadth.up + ' / ' + (ov.breadth.up + ov.breadth.down + ov.breadth.unchanged) + ' 个现货对</span></div>' +
       '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'BTC\')"><span class="k k-logo">' + coinLogoHtml('BTC', 'sm') + 'BTC 趋势</span><span class="v ' + trendClass(btcA) + '">' + trendWord(btcA) + '</span><span class="s">24H ' + (btcA ? fmtChange(btcA.change24h) : '数据缺失') + '</span></div>' +
       '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'ETH\')"><span class="k k-logo">' + coinLogoHtml('ETH', 'sm') + 'ETH 趋势</span><span class="v ' + trendClass(ethA) + '">' + trendWord(ethA) + '</span><span class="s">24H ' + (ethA ? fmtChange(ethA.change24h) : '数据缺失') + '</span></div>' +
@@ -2024,7 +2195,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var pulseSymbols = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE'];
     var spotRows = S.webProducts ? S.webProducts.payload : (S.spotTicker ? VX.parseTickerRows(S.spotTicker.payload) : []);
     var bySymbol = new Map(spotRows.map(function (r) { return [r.symbol, r]; }));
-    html += '<div class="grid grid-3">' + pulseSymbols.map(function (sym) {
+    evidenceHtml += '<div class="grid grid-3">' + pulseSymbols.map(function (sym) {
       var r = bySymbol.get(sym + 'USDT');
       if (!r) return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><span class="sym-l">' + coinLogoHtml(sym, 'sm') + '<b>' + sym + '</b></span></div><div class="p">—</div><div class="c" style="color:var(--weak)">行情待同步</div></div>';
       return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><span class="sym-l">' + coinLogoHtml(sym, 'sm') + '<b>' + sym + '</b></span><span>' + fmtUsd(r.quoteVolume24h) + '</span></div>' +
@@ -2032,7 +2203,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         '<div class="c ' + (r.change24h >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(r.change24h) + '</div></div>';
     }).join('') + '</div>';
     var dv = ov.derivatives;
-    html += '<div class="grid grid-3">' +
+    evidenceHtml += '<div class="grid grid-3">' +
       '<div class="blk stat-blk"><span class="k">BTC 市占率</span><span class="v">' + (ov.btcDominance === null ? '—' : ov.btcDominance.toFixed(1) + '%') + '</span><span class="s">全市场口径</span></div>' +
       '<div class="blk stat-blk"><span class="k">BTC 资金费率</span><span class="v">' + (dv.btcFundingRate === null ? '—' : (dv.btcFundingRate * 100).toFixed(3) + '%') + '</span><span class="s">' + (dv.btcFundingSource ? esc(dv.btcFundingSource) : '数据缺失') + '</span></div>' +
       '<div class="blk stat-blk"><span class="k">BTC 多空比</span><span class="v">' + (dv.btcLongShortRatio === null ? '—' : dv.btcLongShortRatio.toFixed(2)) + '</span><span class="s">账户口径 · 1H</span></div></div>';
@@ -2056,14 +2227,11 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       }
     }
 
-    /* 风险总闸块（仅极端风险时单独成块） */
-    if (ov.risk.level === 'severe') {
-      html += '<div class="zhead"><h2>风险总闸</h2><span class="en">Risk Gate</span></div>' +
-        '<div class="blk"><div class="zlabel"><span>今日风险</span><em class="risk-chip severe">已触发</em></div>' +
-        '<p style="margin:8px 0 0;font-size:13px;color:var(--text-secondary)">' + esc(ov.risk.detail) + '</p></div>';
-    }
+    /* 证据层排在机会之后：先定调、再机会、最后才是佐证 */
+    html += '<div class="zhead"><h2>市场证据</h2><span class="en">Evidence</span><span class="right">佐证层 · 不占决策面</span></div>' + evidenceHtml;
     root.innerHTML = html;
     if (S.route === 'coin') updateCoinPlanSection();
+    if (S.route === 'plan') renderPlanDetail();
   }
 
   /* ---------------- 机会页渲染 ---------------- */
@@ -2103,6 +2271,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     }
     root.innerHTML = html;
     renderScanProgress();
+    if (S.route === 'plan') renderPlanDetail();
   }
 
   /* ---------------- 市场页 ---------------- */
@@ -2705,6 +2874,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       ensureTokenFlow(symbol);
     } else if (tab === 'ai') {
       body.innerHTML = aiTabHtml(symbol);
+      ensureCoinTrack(symbol);
       ensureFlowStart(symbol, 'spot');
       ensureFlowStart(symbol, 'futures');
     }
@@ -3182,10 +3352,12 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     return dedup.sort(function (a, b) { return b.time - a.time; }).slice(0, 10);
   }
   function aiTabHtml(symbol) {
-    return '<div class="zhead"><h2>AI追踪</h2><span class="en">AI Tracking</span><span class="right">规则回溯 · 打开时现算</span></div>' +
-      '<div id="ai-live">' + aiLiveHtml(symbol) + '</div>' +
+    return '<div class="zhead"><h2>AI追踪</h2><span class="en">AI Tracking</span><span class="right" id="ai-source">正在读取服务端账本…</span></div>' +
+      '<div id="ai-server"><div class="blk"><p class="progress-line">正在读取服务端账本中该币的追踪轮次…</p></div></div>' +
+      '<div id="ai-live" style="margin-top:14px">' + aiLiveHtml(symbol) + '</div>' +
       '<details class="fold blk" style="margin-top:14px"><summary>规则口径</summary><div class="fold-body">' +
-      '<p>本页不是服务器推送，也没有历史存档：每次打开都用现货与合约 K 线的主动买卖汇总，按下列固定规则回溯近 24 小时，触发才生成事件卡，不触发就明示暂无异动，绝不编造。</p>' +
+      '<p>上方优先显示服务端账本：该币的追踪轮次与冻结的操作建议，来自服务端，只增不删。服务端不可达时上方为空，下方本地现算仍可用，标题处会写明已切换为本地现算。</p>' +
+      '<p>本地现算不是服务器推送，也没有历史存档：每次打开都用现货与合约 K 线的主动买卖汇总，按下列固定规则回溯近 24 小时，触发才生成事件卡，不触发就明示暂无异动，绝不编造。</p>' +
       '<p>规则一（主力净流极端值）：某完整小时主力净流入 ≥ 此前 24 小时逐时绝对净流均值的 3 倍，且占该小时总流 ≥ 20%（合约优先，无合约用现货；流出镜像）。规则二（窗口转弱）：24 小时涨幅 ≥ 8% 且主力 24 小时净流入为正、近 4 小时转负（下跌镜像）。规则三（FOMO）：某 5 分钟价格变动 ≥ 1.5% 且成交额 ≥ 此前均值的 3 倍。</p>' +
       '<p>参考产品 ValueScan 的 AI 追踪结合其支撑压力位（MSR）与多交易所资金、链上数据生成，规则未公开；本页规则全部写明在此，数据源仅为币安，结论只作辅助参考。</p>' +
       '</div></details>';
@@ -3210,6 +3382,52 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         '<div class="ai-title">' + esc(e.title) + '</div><p class="ai-basis">' + esc(e.basis) + '</p>' +
         '<div class="tag-row">' + e.tags.map(function (tg) { return '<span class="pill">' + esc(tg) + '</span>'; }).join('') + '</div></div>';
     }).join('<div style="height:14px"></div>');
+  }
+
+  /* 币页 AI 追踪：服务端账本优先（该币全部轮次 + 冻结建议 + 事件时间线），
+   * 不可达时回退到下方 aiLiveHtml 的本地规则现算，标题处如实标注来源。 */
+  var coinTrackCache = {};
+  function coinTrackHtml(data) {
+    var rounds = (data && data.rounds) || [];
+    if (!rounds.length) {
+      return '<div class="blk empty-blk"><div class="big">服务端账本里暂无该币轮次</div><p>该币还没有被任何监控开过轮。下方是本地规则现算，两者口径不同，不要混读。</p></div>';
+    }
+    return rounds.map(roundCard).join('');
+  }
+  function ensureCoinTrack(symbol) {
+    var box = document.getElementById('ai-server');
+    var cached = coinTrackCache[symbol];
+    if (cached && cached.status === 'done') {
+      if (box) box.innerHTML = coinTrackHtml(cached.data);
+      var src0 = document.getElementById('ai-source');
+      if (src0) src0.textContent = '服务端账本';
+      return;
+    }
+    if (cached && cached.status === 'error') {
+      if (box) box.innerHTML = '';
+      var src1 = document.getElementById('ai-source');
+      if (src1) src1.textContent = '本地现算 · 服务端不可达';
+      return;
+    }
+    if (cached && cached.status === 'loading') return;
+    coinTrackCache[symbol] = { status: 'loading' };
+    apiFetch('/api/tracking/coin/' + encodeURIComponent(symbol)).then(function (data) {
+      coinTrackCache[symbol] = { status: 'done', data: data };
+      if (S.route === 'coin' && S.coin && S.coin.symbol === symbol && S.coin.tab === 'ai') {
+        var b2 = document.getElementById('ai-server');
+        if (b2) b2.innerHTML = coinTrackHtml(data);
+        var src = document.getElementById('ai-source');
+        if (src) src.textContent = '服务端账本';
+      }
+    }).catch(function () {
+      coinTrackCache[symbol] = { status: 'error' };
+      if (S.route === 'coin' && S.coin && S.coin.symbol === symbol && S.coin.tab === 'ai') {
+        var b3 = document.getElementById('ai-server');
+        if (b3) b3.innerHTML = '';
+        var src2 = document.getElementById('ai-source');
+        if (src2) src2.textContent = '本地现算 · 服务端不可达';
+      }
+    });
   }
 
   /* ---------------- 主力成本（参考成本） ----------------
@@ -3365,6 +3583,348 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   }
 
 
+  /* ---------------- 账号与服务端追踪（服务端版接口） ----------------
+   * 静态版是前门：账号、邀请、我的追踪与 AI 追踪账本都读服务端版接口。
+   * 跨源（GitHub Pages）时用 Bearer 会话令牌：令牌由登录/注册响应体返回、
+   * 存 localStorage，与 Cookie 是同一会话库的同一令牌（同哈希、同有效期、
+   * 同吊销）。同源（pages.dev 根路径）时优先走 Cookie。服务端不可达时
+   * 账号区明示暂停，追踪区回退到币页的本地规则现算，绝不冒充账本数据。 */
+  var API_BASE = location.hostname === 'vtx-aw7.pages.dev' ? '' : 'https://vtx-aw7.pages.dev';
+  var TOKEN_KEY = 'vx_session_token';
+  function authToken() { try { return localStorage.getItem(TOKEN_KEY); } catch (e) { return null; } }
+  function setAuthToken(t) { try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+  S.account = undefined; /* undefined=未查 · null=未登录 · 对象=会话 */
+  S.authTab = 'login';
+  S.authMsg = null;
+  S.tracking = undefined; /* undefined=未拉 · null=服务端不可达 · 对象=账本 */
+  S.myTracks = undefined; /* undefined=未拉 · null=不可达 · 对象=/my 响应 */
+  (function readInviteParam() {
+    var m = /[?&]invite=([A-Za-z0-9_-]{1,64})/.exec(location.search || '');
+    if (m) { S.invitePrefill = m[1]; S.authTab = 'register'; }
+  })();
+
+  function apiFetch(path, options) {
+    options = options || {};
+    var headers = {};
+    var token = authToken();
+    if (token) headers.Authorization = 'Bearer ' + token;
+    if (options.body) headers['Content-Type'] = 'application/json';
+    return fetch(API_BASE + path, {
+      method: options.method || 'GET',
+      headers: headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      credentials: API_BASE === '' ? 'same-origin' : 'omit',
+    }).then(function (res) {
+      return res.json().catch(function () { return null; }).then(function (body) {
+        if (!res.ok) { var err = new Error((body && body.message) || ('请求失败（' + res.status + '）')); err.status = res.status; throw err; }
+        return body;
+      });
+    });
+  }
+  function authPost(payload) { return apiFetch('/api/auth/account', { method: 'POST', body: payload }); }
+  function applyAuthResult(body) {
+    if (body && body.token) setAuthToken(body.token);
+    S.account = body && body.session ? body.session : null;
+    S.myTracks = undefined;
+  }
+  function refreshSession() {
+    return apiFetch('/api/auth/account').then(function (body) {
+      S.account = body && body.session ? body.session : null;
+      if (!S.account) setAuthToken(null);
+    }).catch(function () {
+      if (S.account === undefined) S.account = null; /* 首次查不到：先按未登录呈现，令牌保留 */
+    });
+  }
+
+  function fieldVal(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+  function authMsgHtml() {
+    if (!S.authMsg) return '<p class="form-msg"></p>';
+    return '<p class="form-msg ' + (S.authMsg.kind || '') + '">' + esc(S.authMsg.text) + '</p>';
+  }
+  function authFormsHtml() {
+    var tab = S.authTab;
+    var html = '<div class="zhead"><h2>账号</h2><span class="en">Account</span><span class="right">服务端版账号 · 全站通用</span></div><div class="stack"><div class="blk">' +
+      '<div class="sub-tabs">' +
+      '<button class="sub-tab' + (tab === 'login' ? ' active' : '') + '" onclick="window.__vxAuthTab(\'login\')">登录</button>' +
+      '<button class="sub-tab' + (tab === 'register' ? ' active' : '') + '" onclick="window.__vxAuthTab(\'register\')">注册</button></div>';
+    var draft = S.authDraft || {};
+    if (tab === 'login') {
+      html += '<label class="fld"><span class="k">用户名或邮箱</span><input class="inp" id="ac-id" autocomplete="username" value="' + esc(draft.id || '') + '"></label>' +
+        '<label class="fld"><span class="k">密码</span><input class="inp" id="ac-pw" type="password" autocomplete="current-password"></label>' +
+        '<p style="margin-top:14px"><button class="btn-accent" id="ac-login-btn" onclick="window.__vxLogin()">登录</button></p>';
+    } else {
+      html += '<label class="fld"><span class="k">邮箱</span><input class="inp" id="ac-email" type="email" autocomplete="email" value="' + esc(draft.email || '') + '"></label>' +
+        '<label class="fld"><span class="k">邮箱验证码</span><span class="code-row"><input class="inp" id="ac-code" inputmode="numeric" autocomplete="one-time-code"><button class="btn-line" id="ac-code-btn" onclick="window.__vxSendCode()">发送验证码</button></span></label>' +
+        '<label class="fld"><span class="k">用户名（3–32 位字母、数字、下划线或短横线）</span><input class="inp" id="ac-name" autocomplete="username" value="' + esc(draft.name || '') + '"></label>' +
+        '<label class="fld"><span class="k">密码（至少 8 位）</span><input class="inp" id="ac-pw2" type="password" autocomplete="new-password"></label>' +
+        '<label class="fld"><span class="k">邀请码（选填）</span><input class="inp" id="ac-invite" value="' + esc(draft.invite !== undefined ? draft.invite : (S.invitePrefill || '')) + '"></label>' +
+        '<p style="margin-top:14px"><button class="btn-accent" id="ac-reg-btn" onclick="window.__vxRegister()">注册并登录</button></p>';
+    }
+    html += authMsgHtml() + '</div></div>';
+    return html;
+  }
+  function inviteLink(code) {
+    var base = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : 'https://qk-arena.github.io/vortex/';
+    return base + '?invite=' + encodeURIComponent(code) + '#/me';
+  }
+  function accountHtml() {
+    var s = S.account;
+    var code = String(s.inviteCode || s.username || '').toUpperCase();
+    var link = inviteLink(s.inviteCode || s.username || '');
+    return '<div class="zhead"><h2>我的账号</h2><span class="en">Account</span><span class="right">' + esc(s.username) + '</span></div><div class="stack">' +
+      /* 账号 */
+      '<div class="blk"><div class="round-head"><span class="sym">' + esc(s.username) + '</span><span class="pill ok">已登录</span></div>' +
+      '<div class="round-prices">邮箱 <b>' + esc(s.email || '—') + '</b></div>' +
+      '<p style="margin-top:12px"><button class="btn-line" onclick="window.__vxLogout()">退出登录</button></p></div>' +
+      /* 邀请：只有三行，不加说明文字 */
+      '<div class="zhead"><h2>邀请</h2><span class="en">Invite</span></div>' +
+      '<div class="blk">' +
+      '<div class="kv-line"><span class="k">我的邀请码</span><span class="v">' + esc(code) + '</span><button class="btn-line" onclick="window.__vxCopy(this)">复制</button></div>' +
+      '<div class="kv-line"><span class="k">邀请链接</span><span class="v" style="font-weight:400;font-size:11.5px">' + esc(link) + '</span><button class="btn-line" onclick="window.__vxCopy(this)">复制</button></div>' +
+      '<div class="kv-line"><span class="k">已邀请</span><span class="v">' + (s.invitedCount || 0) + ' 人</span></div></div>' +
+      /* 设置：只放后端真支持的项 */
+      '<div class="zhead"><h2>设置</h2><span class="en">Settings</span></div>' +
+      settingsHtml(s) +
+      '<div id="me-tracks">' + myTracksHtml() + '</div></div>';
+  }
+  /* 设置只包含账号接口真正支持的操作：老账号补设密码（set-password）、
+   * 邮箱验证码改密码（forgot-code + reset）。没有后端支持的开关一律不放。 */
+  function settingsHtml(s) {
+    function msgFor(blk) {
+      return S.settingsMsg && S.settingsMsg.blk === blk
+        ? '<p class="form-msg ' + (S.settingsMsg.kind || '') + '">' + esc(S.settingsMsg.text) + '</p>' : '<p class="form-msg"></p>';
+    }
+    var html = '';
+    if (s.needsPasswordSetup) {
+      html += '<div class="blk"><div class="zlabel"><span>设置登录密码</span></div>' +
+        '<label class="fld"><span class="k">邮箱</span><input class="inp" id="st-email" type="email" autocomplete="email"></label>' +
+        '<label class="fld"><span class="k">密码（至少 8 位）</span><input class="inp" id="st-pw" type="password" autocomplete="new-password"></label>' +
+        '<p style="margin-top:12px"><button class="btn-accent" onclick="window.__vxSetPassword()">设置密码</button></p>' + msgFor('set') + '</div>';
+    }
+    html += '<div class="blk"><div class="zlabel"><span>修改密码</span><span style="margin-left:auto">邮箱验证码</span></div>' +
+      '<label class="fld"><span class="k">邮箱</span><input class="inp" id="rs-email" type="email" autocomplete="email" value="' + esc(s.email || '') + '"></label>' +
+      '<label class="fld"><span class="k">邮箱验证码</span><span class="code-row"><input class="inp" id="rs-code" inputmode="numeric" autocomplete="one-time-code"><button class="btn-line" onclick="window.__vxForgotSend()">发送验证码</button></span></label>' +
+      '<label class="fld"><span class="k">新密码（至少 8 位）</span><input class="inp" id="rs-pw" type="password" autocomplete="new-password"></label>' +
+      '<p style="margin-top:12px"><button class="btn-accent" onclick="window.__vxResetPassword()">确认修改</button></p>' +
+      '<p class="fact-line">修改成功后所有设备上的登录都会失效，需要用新密码重新登录。</p>' + msgFor('reset') + '</div>';
+    return html;
+  }
+  window.__vxSetPassword = function () {
+    authPost({ action: 'set-password', email: fieldVal('st-email'), password: fieldVal('st-pw') }).then(function (body) {
+      if (body && body.session) S.account = body.session;
+      S.settingsMsg = { kind: 'ok', text: '密码已设置。', blk: 'set' };
+      renderMe();
+    }).catch(function (err) { S.settingsMsg = { kind: 'err', text: err.message, blk: 'set' }; renderMe(); });
+  };
+  window.__vxForgotSend = function () {
+    authPost({ action: 'forgot-code', email: fieldVal('rs-email') }).then(function (body) {
+      S.settingsMsg = { kind: 'ok', text: body.message || '验证码已发送。', blk: 'reset' };
+      renderMe();
+    }).catch(function (err) { S.settingsMsg = { kind: 'err', text: err.message, blk: 'reset' }; renderMe(); });
+  };
+  window.__vxResetPassword = function () {
+    authPost({ action: 'reset', email: fieldVal('rs-email'), code: fieldVal('rs-code'), password: fieldVal('rs-pw') }).then(function () {
+      /* 服务端在改密时吊销全部会话，本机令牌一并清掉，回到登录 */
+      setAuthToken(null);
+      S.account = null; S.myTracks = undefined; S.settingsMsg = null;
+      S.authTab = 'login';
+      S.authMsg = { kind: 'ok', text: '密码已修改，请用新密码重新登录。' };
+      renderMe();
+    }).catch(function (err) { S.settingsMsg = { kind: 'err', text: err.message, blk: 'reset' }; renderMe(); });
+  };
+  var TRACK_KIND_LABEL = { price: '价格跟踪', flow: '资金跟踪', volume: '交易量跟踪', token: '代币跟踪' };
+  function myTracksHtml() {
+    if (!S.account) return '';
+    var head = '<div class="zhead"><h2>我的追踪</h2><span class="en">My Tracking</span></div>';
+    if (S.myTracks === undefined || S.myTracks === 'loading') return head + '<div class="blk"><p class="progress-line">正在读取我的追踪…</p></div>';
+    if (S.myTracks === null) return head + '<div class="blk empty-blk"><div class="big">服务端暂不可达</div><p>我的追踪存在服务端账本里，连不上时不猜测、不显示旧数据。</p></div>';
+    var data = S.myTracks;
+    var html = head;
+    if (!data.tracks.length) html += '<div class="blk empty-blk"><div class="big">还没有追踪</div><p>在下方加一条：选类型、填币种，价格类可再填提醒价。</p></div>';
+    html += data.tracks.map(function (t) {
+      var advice = data.adviceBySymbol ? data.adviceBySymbol[t.symbol] : null;
+      var params = [];
+      if (t.params && t.params.alertAbove) params.push('涨破 ' + fmtPrice(t.params.alertAbove) + ' 提醒');
+      if (t.params && t.params.alertBelow) params.push('跌破 ' + fmtPrice(t.params.alertBelow) + ' 提醒');
+      return '<div class="blk"><div class="round-head">' + coinLogoHtml(t.symbol, '') + '<span class="sym">' + esc(t.symbol) + '</span>' +
+        '<span class="pill">' + esc(TRACK_KIND_LABEL[t.kind] || t.kind) + '</span>' +
+        '<button class="btn-line" style="margin-left:auto;padding:4px 10px" onclick="window.__vxTrackDel(\'' + esc(t.trackId) + '\')">删除</button></div>' +
+        (params.length ? '<div class="round-prices">' + esc(params.join(' · ')) + '</div>' : '') +
+        (advice && advice.advice ? adviceHtml(advice.advice) : '<div class="round-prices">该币当前没有进行中的追踪轮次。</div>') + '</div>';
+    }).join('');
+    html += '<div class="blk"><div class="zlabel"><span>新增追踪</span></div>' +
+      '<label class="fld"><span class="k">类型</span><select class="inp" id="mt-kind"><option value="price">价格跟踪</option><option value="flow">资金跟踪</option><option value="volume">交易量跟踪</option><option value="token">代币跟踪</option></select></label>' +
+      '<label class="fld"><span class="k">币种（如 BTC）</span><input class="inp" id="mt-symbol"></label>' +
+      '<label class="fld"><span class="k">涨破提醒价（选填）</span><input class="inp" id="mt-above" inputmode="decimal"></label>' +
+      '<label class="fld"><span class="k">跌破提醒价（选填）</span><input class="inp" id="mt-below" inputmode="decimal"></label>' +
+      '<p style="margin-top:12px"><button class="btn-accent" onclick="window.__vxTrackAdd()">添加</button></p><p class="form-msg" id="mt-msg"></p></div>';
+    return html;
+  }
+  function ensureMyTracks() {
+    if (!S.account || S.myTracks !== undefined) return;
+    S.myTracks = 'loading';
+    apiFetch('/api/tracking/my').then(function (body) {
+      S.myTracks = body && body.authenticated ? body : null;
+      if (S.route === 'me') renderMe();
+    }).catch(function () { S.myTracks = null; if (S.route === 'me') renderMe(); });
+  }
+  function renderMe() {
+    var root = document.getElementById('me-account-root');
+    if (!root) return;
+    if (S.account === undefined) {
+      root.innerHTML = '<div class="stack"><div class="blk"><p class="progress-line">正在连接账号服务…</p></div></div>';
+      refreshSession().then(function () { if (S.route === 'me') renderMe(); });
+      return;
+    }
+    root.innerHTML = S.account ? accountHtml() : authFormsHtml();
+    if (S.account) ensureMyTracks();
+  }
+  window.__vxAuthTab = function (tab) { S.authTab = tab; S.authMsg = null; renderMe(); };
+  window.__vxCopy = function (btn) {
+    var line = btn.closest('.kv-line');
+    var v = line ? line.querySelector('.v') : null;
+    var text = v ? v.textContent : '';
+    function done() { btn.textContent = '已复制'; setTimeout(function () { btn.textContent = '复制'; }, 1500); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
+    else done();
+  };
+  function saveAuthDraft() {
+    S.authDraft = {
+      id: fieldVal('ac-id'), email: fieldVal('ac-email'), name: fieldVal('ac-name'),
+      invite: fieldVal('ac-invite'),
+    };
+  }
+  window.__vxSendCode = function () {
+    var email = fieldVal('ac-email');
+    var btn = document.getElementById('ac-code-btn');
+    if (btn) btn.disabled = true;
+    saveAuthDraft();
+    authPost({ action: 'register-code', email: email }).then(function (body) {
+      S.authMsg = { kind: 'ok', text: body.message || '验证码已发送，10 分钟内有效。' }; renderMe();
+    }).catch(function (err) {
+      S.authMsg = { kind: 'err', text: err.message }; renderMe();
+    });
+  };
+  window.__vxRegister = function () {
+    var btn = document.getElementById('ac-reg-btn'); if (btn) btn.disabled = true;
+    saveAuthDraft();
+    authPost({ action: 'register', username: fieldVal('ac-name'), email: fieldVal('ac-email'), password: fieldVal('ac-pw2'), code: fieldVal('ac-code'), inviteCode: fieldVal('ac-invite') }).then(function (body) {
+      applyAuthResult(body); S.authMsg = null; S.authDraft = null; renderMe();
+    }).catch(function (err) { S.authMsg = { kind: 'err', text: err.message }; renderMe(); });
+  };
+  window.__vxLogin = function () {
+    var btn = document.getElementById('ac-login-btn'); if (btn) btn.disabled = true;
+    saveAuthDraft();
+    authPost({ action: 'login', identifier: fieldVal('ac-id'), password: fieldVal('ac-pw') }).then(function (body) {
+      applyAuthResult(body); S.authMsg = null; S.authDraft = null; renderMe();
+    }).catch(function (err) { S.authMsg = { kind: 'err', text: err.message }; renderMe(); });
+  };
+  window.__vxLogout = function () {
+    apiFetch('/api/auth/account', { method: 'DELETE' }).catch(function () {}).then(function () {
+      setAuthToken(null); S.account = null; S.myTracks = undefined; S.authMsg = null; renderMe();
+    });
+  };
+  window.__vxTrackAdd = function () {
+    var kind = fieldVal('mt-kind'), symbol = fieldVal('mt-symbol').toUpperCase();
+    var params = {};
+    var above = fieldVal('mt-above'), below = fieldVal('mt-below');
+    if (above) params.alertAbove = Number(above);
+    if (below) params.alertBelow = Number(below);
+    apiFetch('/api/tracking/my', { method: 'POST', body: { kind: kind, symbol: symbol, params: params } }).then(function () {
+      S.myTracks = undefined; renderMe();
+    }).catch(function (err) { var m = document.getElementById('mt-msg'); if (m) { m.textContent = err.message; m.className = 'form-msg err'; } });
+  };
+  window.__vxTrackDel = function (trackId) {
+    apiFetch('/api/tracking/my?trackId=' + encodeURIComponent(trackId), { method: 'DELETE' }).then(function () {
+      S.myTracks = undefined; renderMe();
+    }).catch(function () { S.myTracks = undefined; renderMe(); });
+  };
+
+  /* ---------------- AI追踪板块（服务端账本） ---------------- */
+  var MONITOR_SHORT = { surge_long: '异动看涨', opportunity_long: '机会看涨', risk_short: '风险看跌' };
+  var CLOSE_LABEL = { hit: '命中', invalid: '失效', expired: '到期', replaced: '被替代' };
+  function adviceHtml(advice) {
+    if (!advice) return '';
+    var zone = advice.entryZoneText ? esc(advice.entryZoneText)
+      : advice.entryZoneLow != null ? fmtPrice(advice.entryZoneLow) + ' – ' + fmtPrice(advice.entryZoneHigh) : '—';
+    return '<div class="advice-blk"><div class="zlabel"><span class="v-accent" style="font-weight:700">' + esc(advice.label || '观察建议') + '</span>' +
+      '<span style="margin-left:auto">' + fmtTime(Date.parse(advice.issuedAt)) + ' 发布 · 冻结不改</span></div>' +
+      '<div class="a-row"><b>' + esc(advice.directionLabel || '') + '</b> · ' + esc(advice.action || '') + '</div>' +
+      '<div class="a-row">触发：' + esc(advice.trigger || '—') + '</div>' +
+      '<div class="a-row">入场区间 <b>' + zone + '</b> · 目标 <b>' + fmtPrice(advice.targetPrice) + '</b> · 失效 <b>' + fmtPrice(advice.invalidationPrice) + '</b></div>' +
+      '<div class="a-row">出场纪律：' + esc(advice.exitRuleText || '—') + '</div></div>';
+  }
+  function roundCard(round) {
+    var ret = round.currentReturnPct;
+    var retHtml = ret == null || !Number.isFinite(ret) ? '—' : '<span class="' + (ret >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(ret) + '</span>';
+    return '<div class="blk"><div class="round-head">' + coinLogoHtml(round.symbol, '') + '<span class="sym">' + esc(round.symbol) + '</span>' +
+      '<span class="badge ' + (round.direction === 'short' ? 'short' : 'long') + '">' + esc(MONITOR_SHORT[round.monitor] || round.monitor) + '</span>' +
+      '<span class="pill">' + (round.stage === 'watch' ? '观察期' : round.live ? '正式轮次' : '观察轮次') + '</span></div>' +
+      '<div class="round-prices">推送价 <b>' + fmtPrice(round.entry_price) + '</b> · 现价 <b>' + fmtPrice(round.last_price) + '</b> · 推送后 ' + retHtml +
+      (round.ai_score != null ? ' · AI评分 <b>' + esc(round.ai_score) + '</b>' : '') + ' · 推送 ' + fmtTime(Date.parse(round.entry_at)) + '</div>' +
+      adviceHtml(round.advice) + '</div>';
+  }
+  function trackingBoardHtml(data) {
+    var board = data.board, history = data.history;
+    var stats = board.stats || {};
+    var html = '<div class="blk"><div class="zlabel"><span class="pill warn">' + esc(board.modeLabel || '观察中 · 规则验证中') + '</span>' +
+      '<span style="margin-left:auto">数据来源：服务端账本</span></div>' +
+      '<div class="round-prices">进行中 <b>' + (stats.openRounds || 0) + '</b> · 观察期 <b>' + (stats.watchRounds || 0) + '</b> · 已平仓 <b>' + (stats.closedRounds || 0) + '</b>' +
+      (stats.winRate != null ? ' · 正式轮次胜率 <b>' + stats.winRate + '%</b>' : '') + '</div>' +
+      '<p class="ai-basis" style="margin-top:6px">' + esc(stats.note || '') + '</p></div>';
+    (board.monitors || []).forEach(function (m) {
+      html += '<div class="zhead"><h2>' + esc(m.label) + '</h2><span class="right">' + m.rows.length + ' 条</span></div>';
+      html += m.rows.length ? m.rows.map(roundCard).join('') : '<div class="blk empty-blk"><p>当前没有进行中的轮次。</p></div>';
+    });
+    if (board.watch && board.watch.length) {
+      html += '<div class="zhead"><h2>观察区</h2><span class="right">' + board.watch.length + ' 条</span></div>' + board.watch.map(roundCard).join('');
+    }
+    if (board.events && board.events.length) {
+      html += '<div class="zhead"><h2>事件流</h2><span class="en">Events</span></div>' + board.events.slice(0, 20).map(function (e) {
+        return '<div class="blk ai-card"><div class="zlabel"><span>' + fmtTime(Date.parse(e.created_at)) + '（北京时间）</span>' +
+          '<span class="badge ' + (e.monitor === 'risk_short' ? 'short' : 'long') + '" style="margin-left:auto">' + esc(MONITOR_SHORT[e.monitor] || '') + ' · ' + esc(e.symbol || '') + '</span></div>' +
+          '<div class="ai-title">' + esc(e.title) + '</div><p class="ai-basis">' + esc(e.body) + '</p>' +
+          (e.tags && e.tags.length ? '<div class="tag-row">' + e.tags.map(function (tg) { return '<span class="pill">' + esc(tg) + '</span>'; }).join('') + '</div>' : '') + '</div>';
+      }).join('');
+    }
+    var items = history && history.items ? history.items : [];
+    html += '<div class="zhead"><h2>历史账本</h2><span class="en">History</span><span class="right">只增不删 · 亏损同样在册</span></div>';
+    if (!items.length) html += '<div class="blk empty-blk"><p>尚无平仓轮次。</p></div>';
+    else html += '<div class="blk">' + items.map(function (r) {
+      var ret = r.close_return_pct;
+      return '<div class="hist-line"><span class="sym">' + esc(r.symbol) + '</span><span class="dim">' + esc(MONITOR_SHORT[r.monitor] || r.monitor) + '</span>' +
+        '<span class="dim">入 ' + fmtPrice(r.entry_price) + ' → 出 ' + fmtPrice(r.close_price) + '</span>' +
+        '<span class="dim">' + esc(CLOSE_LABEL[r.status] || r.status) + ' · ' + fmtTime(Date.parse(r.closed_at)) + '</span>' +
+        '<span class="r ' + (ret == null ? '' : ret >= 0 ? 'v-up' : 'v-down') + '">' + (ret == null ? '—' : fmtChange(ret)) + '</span></div>';
+    }).join('') + '</div>';
+    return html;
+  }
+  function renderTracking() {
+    var root = document.getElementById('tracking-root');
+    if (!root) return;
+    if (S.tracking === undefined) {
+      root.innerHTML = '<div class="blk"><p class="progress-line">正在读取服务端追踪账本…</p></div>';
+      Promise.all([apiFetch('/api/tracking'), apiFetch('/api/tracking/history?limit=20')]).then(function (r) {
+        S.tracking = { board: r[0], history: r[1] };
+        var u = document.getElementById('tracking-updated');
+        if (u) u.textContent = '服务端账本 · ' + fmtClock(Date.now()) + ' 更新';
+        if (S.route === 'signals') renderTracking();
+      }).catch(function () {
+        S.tracking = null;
+        if (S.route === 'signals') renderTracking();
+      });
+      return;
+    }
+    if (S.tracking === null) {
+      root.innerHTML = '<div class="blk empty-blk"><div class="big">服务端账本暂不可达</div>' +
+        '<p>AI 追踪的正式账本在服务端，连不上时这里不显示任何轮次。各币种页的「AI追踪」标签仍有本地规则现算（打开时用币安 K 线回溯近 24 小时），口径与账本不同，页面上会写明是本地现算。</p>' +
+        '<p style="margin-top:10px"><button class="refresh-btn" onclick="window.__vxTrackingRetry()">重试连接</button></p></div>';
+      return;
+    }
+    root.innerHTML = trackingBoardHtml(S.tracking);
+  }
+  window.__vxTrackingRetry = function () { S.tracking = undefined; renderTracking(); };
+
   window.__vxCoin = function (sym) {
     var target = '#/coin/' + sym;
     if (location.hash === target) applyRoute('coin', sym);
@@ -3380,22 +3940,30 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   function parseHash() {
     var parts = location.hash.replace(/^#\/?/, '').split('/');
     if (parts[0] === 'coin' && parts[1]) return { route: 'coin', symbol: parts[1].toUpperCase() };
+    if (parts[0] === 'plan' && parts[1]) return { route: 'plan', symbol: null, planKey: decodeURIComponent(parts.slice(1).join('/')) };
     return { route: ROUTES.indexOf(parts[0]) >= 0 ? parts[0] : 'today', symbol: null };
   }
   function applyRoute(route, symbol) {
-    if (route !== 'coin' && ROUTES.indexOf(route) < 0) route = 'today';
+    if (route !== 'coin' && route !== 'plan' && ROUTES.indexOf(route) < 0) route = 'today';
     S.route = route;
+    if (route === 'plan') S.planKey = symbol;
     document.querySelectorAll('.view').forEach(function (v) { v.classList.toggle('active', v.id === 'view-' + route); });
-    var navRoute = route === 'coin' ? 'today' : route;
+    var navRoute = route === 'coin' ? 'today' : route === 'plan' ? 'signals' : route;
     document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.toggle('active', n.getAttribute('data-route') === navRoute); });
     window.scrollTo(0, 0);
     if (route === 'today' || route === 'signals') {
       loadCore().then(function () { renderToday(); });
       ensureScan();
+      if (route === 'signals') renderTracking();
     } else if (route === 'market') {
       startMarket();
     } else if (route === 'voices') {
       renderVoices();
+    } else if (route === 'me') {
+      renderMe();
+    } else if (route === 'plan') {
+      renderPlanDetail();
+      ensureScan();
     } else if (route === 'coin') {
       loadCore().then(function () { renderToday(); });
       ensureScan();
@@ -3411,7 +3979,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   });
   window.addEventListener('hashchange', function () {
     var p = parseHash();
-    applyRoute(p.route, p.symbol);
+    applyRoute(p.route, p.route === 'plan' ? p.planKey : p.symbol);
   });
   var signalsRunBtn = document.getElementById('signals-run');
   if (signalsRunBtn) signalsRunBtn.addEventListener('click', function () { ensureScan(); });
@@ -3437,8 +4005,9 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     if (S.route === 'market' && S.liq.status === 'open') renderLiq();
   }, 15000);
 
+  refreshSession();
   var initialRoute = parseHash();
-  applyRoute(initialRoute.route, initialRoute.symbol);
+  applyRoute(initialRoute.route, initialRoute.route === 'plan' ? initialRoute.planKey : initialRoute.symbol);
 })();
 
 </script>
