@@ -137,6 +137,43 @@ details.fold .fold-body p { margin: 4px 0; }
 .coin-chg { font-size: 15px; font-weight: 700; }
 .chart-canvas { width: 100%; height: 190px; display: block; margin-top: 8px; }
 
+/* ---------- 币种详情标签页 ---------- */
+.coin-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
+.coin-tab {
+  background: var(--panel); color: var(--muted); border: 1px solid var(--line);
+  border-radius: 999px; padding: 6px 13px; font-size: 12.5px; cursor: pointer; font: inherit;
+}
+.coin-tab.active { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 700; }
+.sub-tabs { display: flex; gap: 8px; margin: 12px 0; }
+.sub-tab {
+  background: none; color: var(--muted); border: none; border-bottom: 2px solid transparent;
+  padding: 4px 2px; font-size: 13.5px; cursor: pointer; font: inherit;
+}
+.sub-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 700; }
+.flow-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+.flow-table th { text-align: right; color: var(--muted); font-weight: 400; font-size: 11.5px; padding: 5px 4px; border-bottom: 1px solid var(--line); }
+.flow-table th:first-child { text-align: left; }
+.flow-table td { text-align: right; padding: 7px 4px; border-bottom: 1px solid var(--line); color: var(--text-secondary); }
+.flow-table td.fw { text-align: left; color: var(--muted); white-space: nowrap; }
+.flow-table td.cov-cell { text-align: right; width: 74px; }
+.flow-table tr:last-child td { border-bottom: none; }
+.cov-badge { font-size: 10.5px; color: var(--weak); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 7px; white-space: nowrap; }
+.cov-badge.warn { color: var(--warn); border-color: var(--warn); }
+.flow-canvas { width: 100%; height: 120px; display: block; margin-top: 10px; }
+.flow-canvas.tall { height: 170px; }
+.flow-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.flow-scroll .flow-table { min-width: 560px; }
+.flow-table td.fw .cov-badge { display: inline-block; margin-left: 6px; }
+.seg-switch { display: inline-flex; gap: 6px; }
+.seg-btn {
+  background: var(--panel-inset); color: var(--muted); border: 1px solid var(--line);
+  border-radius: 999px; padding: 3px 10px; font-size: 11px; cursor: pointer; font: inherit;
+}
+.seg-btn.active { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 700; }
+.cap-line { font-size: 11px; color: var(--muted); margin: 8px 0 0; }
+.ai-card .ai-title { font-size: 16px; font-weight: 700; margin-top: 6px; }
+.ai-card .ai-basis { font-size: 12.5px; color: var(--text-secondary); margin: 4px 0 0; }
+
 /* ---------- 机会卡 ---------- */
 .plan-card { display: block; }
 .plan-top { display: flex; align-items: flex-start; gap: 10px; }
@@ -2535,10 +2572,14 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var root = document.getElementById('coin-root');
     if (!root) return;
     var pair = symbol + 'USDT';
-    root.innerHTML =
-      '<div class="coin-top"><button class="refresh-btn" onclick="window.__vxGo(\'today\')">← 返回今日</button>' +
-      coinLogoHtml(symbol, 'lg') +
-      '<span class="coin-title">' + esc(symbol) + '<small>' + esc(pair) + ' · 币安公开行情</small></span></div>' +
+    S.coin = {
+      symbol: symbol, tab: 'overview',
+      sub: { spot: 'main', futures: 'main' },
+      overview: null, gecko: undefined, histSpan: { spot: '48h', futures: '48h' },
+      futKlines: undefined, cost: undefined, chainFlow: undefined,
+    };
+    renderCoinShell();
+    document.getElementById('coin-tab-body').innerHTML =
       '<div class="blk"><p class="progress-line">正在读取 ' + esc(symbol) + ' 实时行情（现货 24H · 小时 K 线 · 合约数据）…</p></div>' +
       '<div id="coin-plans">' + coinPlanSectionHtml(symbol) + '</div>';
     Promise.all([
@@ -2548,18 +2589,17 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       fetchCoinJson(VX.FUTURES_HOSTS, '/fapi/v1/openInterest?symbol=' + pair, function (v) { return v && v.symbol === pair; }, 9000),
       fetchCoinLongShort(pair),
     ]).then(function (r) {
-      if (token !== S.coinToken || S.route !== 'coin' || S.coinSymbol !== symbol) return;
-      renderCoinDetail(symbol, { ticker: r[0], klines: r[1], premium: r[2], oi: r[3], ls: r[4] });
+      if (token !== S.coinToken || S.route !== 'coin' || S.coinSymbol !== symbol || !S.coin) return;
+      S.coin.overview = { ticker: r[0], klines: r[1], premium: r[2], oi: r[3], ls: r[4] };
+      if (S.coin.tab === 'overview') renderCoinBody();
+      else renderCoinBodySoft();
     });
+    fetchCoinGecko(symbol);
   }
-  function renderCoinDetail(symbol, d) {
-    var root = document.getElementById('coin-root');
-    if (!root) return;
+  function coinOverviewHtml(symbol, d) {
     var now = Date.now();
     var pair = symbol + 'USDT';
-    var html = '<div class="coin-top"><button class="refresh-btn" onclick="window.__vxGo(\'today\')">← 返回今日</button>' +
-      coinLogoHtml(symbol, 'lg') +
-      '<span class="coin-title">' + esc(symbol) + '<small>' + esc(pair) + ' · 币安公开行情</small></span></div>';
+    var html = '';
     var t = d.ticker && d.ticker.payload;
     if (t) {
       var price = VX.finiteNumber(t.lastPrice), chg = VX.finiteNumber(t.priceChangePercent);
@@ -2607,17 +2647,700 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       html += '<div class="zhead"><h2>合约数据</h2><span class="en">Futures</span></div>' +
         '<div class="blk empty-blk"><p>该币种暂无可核验的 USDT 永续合约数据（无永续合约，或合约接口本次未取回）。</p></div>';
     }
+    html += coinCapStatsHtml(symbol);
     html += '<div id="coin-plans">' + coinPlanSectionHtml(symbol) + '</div>';
     html += '<p class="foot-note">现货与合约数据由浏览器直连币安公开接口 · 抓取 ' + fmtClock(now) + '（北京时间）· 评分与完整度不是胜率。</p>';
-    root.innerHTML = html;
-    if (Array.isArray(rows) && rows.length >= 25) {
-      var candles = aggregate4h(rows);
-      requestAnimationFrame(function () {
-        var canvas = document.getElementById('coin-chart');
-        if (canvas && S.route === 'coin' && S.coinSymbol === symbol) drawCoinChart(canvas, candles);
+    return html;
+  }
+  /* ---------------- 币种详情 · 标签页 ----------------
+   * 概览 / 现货资金 / 合约资金 / 主力成本 / 链上地址 / 代币流向 / AI追踪。
+   * 结构对齐参考产品 ValueScan 的币种页；数据全部浏览器直连公开接口现算，
+   * 拿不到的标签如实说明，不造数（口径见各页折叠与调研文件）。 */
+  var COIN_TABS = [
+    ['overview', '概览'], ['spot', '现货资金'], ['futures', '合约资金'],
+    ['cost', '主力成本'], ['chain', '链上地址'], ['tokenflow', '代币流向'], ['ai', 'AI追踪'],
+  ];
+  function renderCoinShell() {
+    var root = document.getElementById('coin-root');
+    if (!root || !S.coin) return;
+    var symbol = S.coin.symbol, pair = symbol + 'USDT';
+    var tabs = COIN_TABS.map(function (t) {
+      return '<button class="coin-tab' + (S.coin.tab === t[0] ? ' active' : '') + '" data-tab="' + t[0] + '" onclick="window.__vxCoinTab(\'' + t[0] + '\')">' + t[1] + '</button>';
+    }).join('');
+    root.innerHTML =
+      '<div class="coin-top"><button class="refresh-btn" onclick="window.__vxGo(\'today\')">← 返回今日</button>' +
+      coinLogoHtml(symbol, 'lg') +
+      '<span class="coin-title">' + esc(symbol) + '<small>' + esc(pair) + ' · 币安公开行情</small></span></div>' +
+      '<div class="coin-tabs">' + tabs + '</div>' +
+      '<div id="coin-tab-body"></div>';
+  }
+  function renderCoinBody() {
+    var body = document.getElementById('coin-tab-body');
+    if (!body || !S.coin) return;
+    document.querySelectorAll('.coin-tab').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tab') === S.coin.tab);
+    });
+    var symbol = S.coin.symbol, tab = S.coin.tab;
+    if (tab === 'overview') {
+      body.innerHTML = S.coin.overview ? coinOverviewHtml(symbol, S.coin.overview)
+        : '<div class="blk"><p class="progress-line">正在读取 ' + esc(symbol) + ' 实时行情…</p></div><div id="coin-plans">' + coinPlanSectionHtml(symbol) + '</div>';
+    } else if (tab === 'spot' || tab === 'futures') {
+      body.innerHTML = flowTabHtml(symbol, tab);
+      ensureFlowStart(symbol, tab);
+    } else if (tab === 'cost') {
+      body.innerHTML = costTabHtml(symbol);
+      ensureCost(symbol);
+    } else if (tab === 'chain') {
+      body.innerHTML = chainTabHtml(symbol);
+    } else if (tab === 'tokenflow') {
+      body.innerHTML = tokenFlowHtml(symbol);
+      ensureTokenFlow(symbol);
+    } else if (tab === 'ai') {
+      body.innerHTML = aiTabHtml(symbol);
+      ensureFlowStart(symbol, 'spot');
+      ensureFlowStart(symbol, 'futures');
+    }
+    requestAnimationFrame(drawCoinCanvases);
+  }
+  /* 概览数据晚到时，只在当前页还等它时才整页重渲，避免打断用户读表。 */
+  function renderCoinBodySoft() {
+    if (document.getElementById('coin-wait-overview')) renderCoinBody();
+  }
+  window.__vxCoinTab = function (tab) {
+    if (!S.coin) return;
+    S.coin.tab = tab;
+    renderCoinBody();
+  };
+  window.__vxCoinSub = function (market, sub) {
+    if (!S.coin) return;
+    S.coin.sub[market] = sub;
+    renderCoinBody();
+  };
+  function drawCoinCanvases() {
+    if (S.route !== 'coin' || !S.coin) return;
+    var symbol = S.coin.symbol;
+    var chart = document.getElementById('coin-chart');
+    if (chart && S.coin.overview) {
+      var rows = S.coin.overview.klines && S.coin.overview.klines.payload;
+      if (Array.isArray(rows) && rows.length >= 25) drawCoinChart(chart, aggregate4h(rows));
+    }
+    var fs = document.getElementById('flow-series-canvas');
+    if (fs) {
+      var st = getFlow(symbol, fs.getAttribute('data-market'));
+      var buckets = flowBuckets(st, fs.getAttribute('data-span'));
+      var isFlow = fs.getAttribute('data-sub') === 'history';
+      drawBarsLine(fs, buckets.map(function (b) { return { v: isFlow ? b.net : b.total, price: b.close }; }), isFlow);
+    }
+    var tf = document.getElementById('tokenflow-canvas');
+    if (tf && S.coin.chainFlow && S.coin.chainFlow.rows) {
+      drawBars(tf, S.coin.chainFlow.rows.map(function (r) { return { v: r.net }; }), true);
+    }
+  }
+  /* 通用柱图：signed=true 时正绿负红、零轴居中；否则单色柱。 */
+  function drawBars(canvas, items, signed) {
+    if (!items.length) return;
+    var dpr = window.devicePixelRatio || 1;
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    var max = 0;
+    items.forEach(function (it) { var a = Math.abs(it.v || 0); if (a > max) max = a; });
+    if (!max) max = 1;
+    var padT = 6, padB = 6;
+    var zeroY = signed ? Math.round(h / 2) : h - padB;
+    var amp = signed ? (h / 2 - padT) : (h - padT - padB);
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, zeroY + 0.5); ctx.lineTo(w, zeroY + 0.5); ctx.stroke();
+    var step = w / items.length;
+    var bw = Math.max(1, Math.floor(step * 0.66));
+    items.forEach(function (it, i) {
+      var v = it.v || 0;
+      var bh = Math.max(v === 0 ? 0 : 1, Math.abs(v) / max * amp);
+      var x = step * i + (step - bw) / 2;
+      var y = v >= 0 ? zeroY - bh : zeroY;
+      ctx.fillStyle = signed ? (v >= 0 ? '#2bea79' : '#ff3761') : '#d4de27';
+      ctx.globalAlpha = it.partial ? 0.35 : 0.92;
+      ctx.fillRect(x, signed ? y : zeroY - bh, bw, bh);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---------------- 概览补充：市值 / 供应量（CoinGecko） ---------------- */
+  function fetchCoinGecko(symbol) {
+    var url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&symbols=' + encodeURIComponent(symbol.toLowerCase()) + '&sparkline=false';
+    VX.readJson(url, 8000).then(function (rows) {
+      if (!S.coin || S.coin.symbol !== symbol) return;
+      var best = null;
+      if (Array.isArray(rows)) rows.forEach(function (r) {
+        var mc = r ? VX.finiteNumber(r.market_cap) : null;
+        if (mc !== null && (!best || mc > best.market_cap)) best = r;
+      });
+      S.coin.gecko = best;
+      if (S.coin.tab === 'overview' && S.coin.overview) renderCoinBody();
+    });
+  }
+  function coinCapStatsHtml(symbol) {
+    var g = S.coin ? S.coin.gecko : null;
+    var cells = [];
+    var mc = null, rank = null;
+    if (g) {
+      mc = VX.finiteNumber(g.market_cap); rank = VX.finiteNumber(g.market_cap_rank);
+      var circ = VX.finiteNumber(g.circulating_supply), tot = VX.finiteNumber(g.total_supply);
+      if (mc !== null) cells.push(['市值', fmtUsd(mc)]);
+      if (rank !== null) cells.push(['市值排名', '第 ' + rank + ' 位']);
+      if (circ !== null) cells.push(['流通供应量', fmtCompact(circ) + ' ' + symbol]);
+      if (tot !== null) cells.push(['总供应量', fmtCompact(tot) + ' ' + symbol]);
+    } else if (S.marketCaps && Array.isArray(S.marketCaps.payload)) {
+      for (var i = 0; i < S.marketCaps.payload.length; i++) {
+        var row = S.marketCaps.payload[i];
+        if (row && row.symbol === symbol) {
+          if (row.marketCap) cells.push(['市值', fmtUsd(row.marketCap)]);
+          if (row.marketCapRank) cells.push(['市值排名', '第 ' + row.marketCapRank + ' 位']);
+          break;
+        }
+      }
+    }
+    if (!cells.length) return '';
+    return '<div class="zhead"><h2>市值与供应</h2><span class="en">Cap & Supply</span><span class="right">CoinGecko</span></div>' +
+      '<div class="grid grid-4">' + cells.map(function (c) {
+        return '<div class="blk stat-blk"><span class="k">' + c[0] + '</span><span class="v" style="font-size:16px">' + c[1] + '</span></div>';
+      }).join('') + '</div>';
+  }
+
+  /* ---------------- 资金流引擎（K 线主动买卖口径） ----------------
+   * 与 ValueScan 官方手册同一口径：流入 = 主动买入成交额，流出 = 主动卖出成交额。
+   * 币安 K 线自带「主动买入成交额」(takerBuyQuote)：流入 = Σ 该值，
+   * 流出 = Σ (总成交额 − 主动买入成交额)。全部窗口由 K 线精确汇总，不拉逐笔成交。
+   * 三档粒度：≤1 小时窗口用 1 分钟线，≤2 天用小时线，更长用日线（日线分页回溯约 8 年）。 */
+  var FLOW_WINDOWS = [
+    [5, '5分钟'], [15, '15分钟'], [30, '30分钟'], [60, '1小时'], [120, '2小时'], [240, '4小时'],
+    [480, '8小时'], [720, '12小时'], [1440, '1天'], [2880, '2天'], [4320, '3天'], [7200, '5天'],
+    [10080, '7天'], [14400, '10天'], [21600, '15天'], [43200, '30天'], [57600, '40天'], [72000, '50天'],
+    [86400, '60天'], [129600, '90天'], [172800, '120天'], [216000, '150天'], [259200, '180天'],
+    [525600, '1年'], [1051200, '2年'], [1576800, '3年'],
+  ];
+  var flowCache = {};
+  function getFlow(symbol, market) {
+    var k = symbol + '|' + market;
+    if (!flowCache[k]) {
+      flowCache[k] = {
+        symbol: symbol, market: market, status: 'idle',
+        k1m: null, k5m: null, k1h: null, k1d: null,
+        pair: symbol + 'USDT',
+        hosts: market === 'spot' ? VX.SPOT_HOSTS : VX.FUTURES_HOSTS,
+        base: market === 'spot' ? '/api/v3/klines' : '/fapi/v1/klines',
+      };
+    }
+    return flowCache[k];
+  }
+  function fetchKlinesSet(st, interval, limit) {
+    return fetchCoinJson(st.hosts, st.base + '?symbol=' + st.pair + '&interval=' + interval + '&limit=' + limit,
+      function (v) { return Array.isArray(v) && v.length >= 2; }, 9000)
+      .then(function (r) { return r ? r.payload : null; });
+  }
+  function fetchDailyPaged(st) {
+    var limit = st.market === 'spot' ? 1000 : 1500;
+    var maxPages = st.market === 'spot' ? 3 : 2;
+    var all = [];
+    function page(endTime, n) {
+      var path = st.base + '?symbol=' + st.pair + '&interval=1d&limit=' + limit + (endTime ? '&endTime=' + endTime : '');
+      return fetchCoinJson(st.hosts, path, function (v) { return Array.isArray(v) && v.length >= 2; }, 9000)
+        .then(function (r) {
+          if (!r) return all;
+          all = r.payload.concat(all);
+          if (r.payload.length < limit || n + 1 >= maxPages) return all;
+          return page(Number(r.payload[0][0]) - 1, n + 1);
+        });
+    }
+    return page(null, 0).then(function (rows) { return rows.length ? rows : null; });
+  }
+  function ensureFlowStart(symbol, market) {
+    var st = getFlow(symbol, market);
+    if (st.status === 'loading' || st.status === 'done' || st.status === 'unsupported') return st;
+    var ov = S.coin && S.coin.symbol === symbol ? S.coin.overview : null;
+    if (!ov) return st; /* 等概览确认市场是否存在 */
+    var exists = market === 'spot' ? !!ov.ticker : !!ov.premium;
+    if (!exists) { st.status = 'unsupported'; return st; }
+    st.status = 'loading';
+    Promise.all([
+      fetchKlinesSet(st, '1m', 200),
+      fetchKlinesSet(st, '5m', 300),
+      fetchKlinesSet(st, '1h', 200),
+      fetchDailyPaged(st),
+    ]).then(function (r) {
+      st.k1m = r[0]; st.k5m = r[1]; st.k1h = r[2]; st.k1d = r[3];
+      st.status = (r[0] || r[2] || r[3]) ? 'done' : 'error';
+      if (S.route === 'coin' && S.coin && S.coin.symbol === symbol &&
+          (S.coin.tab === market || S.coin.tab === 'ai')) renderCoinBody();
+    });
+    return st;
+  }
+  window.__vxFlowReset = function (market) {
+    if (!S.coin) return;
+    delete flowCache[S.coin.symbol + '|' + market];
+    renderCoinBody();
+  };
+  function flowSetFor(st, winMin) { return winMin <= 60 ? st.k1m : winMin <= 2880 ? st.k1h : st.k1d; }
+  /* 对 [fromMs, toMs) 内整根 K 线汇总主动买卖。 */
+  function sumCandles(rows, fromMs, toMs) {
+    var inn = 0, tot = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var t = Number(rows[i][0]);
+      if (t < fromMs) continue;
+      if (t >= toMs) break;
+      tot += Number(rows[i][7]) || 0;
+      inn += Number(rows[i][10]) || 0;
+    }
+    return { in: inn, out: tot - inn, total: tot };
+  }
+  function flowWindow(st, winMin, now) {
+    var rows = flowSetFor(st, winMin);
+    if (!rows || !rows.length) return null;
+    var wms = winMin * 60000;
+    var cur = sumCandles(rows, now - wms, now + 1);
+    var prev = sumCandles(rows, now - 2 * wms, now - wms);
+    var earliest = Number(rows[0][0]);
+    var gran = winMin <= 60 ? 60000 : winMin <= 2880 ? 3600000 : 86400000;
+    return {
+      in: cur.in, out: cur.out, net: cur.in - cur.out,
+      change: (earliest <= now - 2 * wms + gran) ? (cur.in - cur.out) - (prev.in - prev.out) : null,
+      complete: earliest <= now - wms + gran,
+      sinceMs: earliest,
+    };
+  }
+  function coinMarketCap(symbol) {
+    if (S.coin && S.coin.symbol === symbol && S.coin.gecko) {
+      var mc = VX.finiteNumber(S.coin.gecko.market_cap);
+      if (mc !== null) return mc;
+    }
+    if (S.marketCaps && Array.isArray(S.marketCaps.payload)) {
+      for (var i = 0; i < S.marketCaps.payload.length; i++) {
+        var row = S.marketCaps.payload[i];
+        if (row && row.symbol === symbol && row.marketCap) return row.marketCap;
+      }
+    }
+    return null;
+  }
+  function fmtFlowAbs(v) {
+    var a = Math.abs(v);
+    if (a >= 1e8) return (a / 1e8).toFixed(2) + '亿';
+    if (a >= 1e4) return (a / 1e4).toFixed(2) + '万';
+    if (a >= 100) return a.toFixed(0);
+    return a.toFixed(2);
+  }
+  function fmtFlowSigned(v) { return (v < 0 ? '-' : '') + fmtFlowAbs(v); }
+  function fmtDur(ms) {
+    var d = ms / 86400000;
+    if (d >= 365) return (d / 365).toFixed(1) + ' 年';
+    if (d >= 30) return (d / 30).toFixed(1) + ' 个月';
+    if (d >= 1) return d.toFixed(1) + ' 天';
+    return (ms / 3600000).toFixed(1) + ' 小时';
+  }
+  /* 逐桶序列（资金流历史 / 交易量历史共用）：span='48h' 用小时线，'30d' 用日线。 */
+  function flowBuckets(st, span) {
+    var rows = span === '48h' ? st.k1h : st.k1d;
+    if (!Array.isArray(rows) || !rows.length) return [];
+    var take = span === '48h' ? 48 : 30;
+    return rows.slice(-take).map(function (r) {
+      var tot = Number(r[7]) || 0, tb = Number(r[10]) || 0;
+      return { t: Number(r[0]), total: tot, net: 2 * tb - tot, close: Number(r[4]) || 0 };
+    });
+  }
+
+  /* ---------------- 资金页（现货 / 合约） ---------------- */
+  function flowTabHtml(symbol, market) {
+    var name = market === 'spot' ? '现货资金' : '合约资金';
+    var en = market === 'spot' ? 'Spot Funds' : 'Futures Funds';
+    var sub = S.coin.sub[market];
+    var subs = [['main', '主力资金'], ['history', '资金流历史'], ['volume', '交易量历史']];
+    var html = '<div class="zhead"><h2>' + name + '</h2><span class="en">' + en + '</span><span class="right">币安 ' + (market === 'spot' ? '现货' : 'U 本位永续') + ' · K 线口径</span></div>';
+    html += '<div class="sub-tabs">' + subs.map(function (s) {
+      return '<button class="sub-tab' + (sub === s[0] ? ' active' : '') + '" onclick="window.__vxCoinSub(\'' + market + '\',\'' + s[0] + '\')">' + s[1] + '</button>';
+    }).join('') + '</div>';
+    html += '<div id="flow-live">' + flowLiveHtml(symbol, market) + '</div>';
+    html += '<details class="fold blk" style="margin-top:14px"><summary>口径说明</summary><div class="fold-body">' +
+      '<p>数据范围：仅币安单一交易所（现货为 ' + esc(symbol) + 'USDT 现货，合约为 ' + esc(symbol) + 'USDT 永续），由浏览器直连币安公开 K 线接口汇总。参考产品 ValueScan 的官方说明只称「主流交易所实时抓取」，从不点名交易所名单，且为多所聚合，数值必然与本页不同，不可直接对比。</p>' +
+      '<p>口径与 ValueScan 官方手册一致：流入 = 主动买入成交额（K 线自带的主动买入量字段），流出 = 主动卖出成交额（总成交额 − 主动买入），净流入 = 流入 − 流出。这里统计的是<b>全部成交</b>的主动方向，不做大单门槛过滤；每笔成交同时有买卖双方，流入/流出是主动方向的统计，不是资金真的进出交易所。</p>' +
+      '<p>净流入变化 = 本窗口净流入 − 上一个等长窗口的净流入，反映净流的增减趋势。资金市值比 =（流入 + 流出）÷ 市值 × 100%，市值取自 CoinGecko / 市值池数据，取不到时该列留空。</p>' +
+      '<p>窗口按整根 K 线归属（≤1 小时窗口用 1 分钟线，≤2 天用小时线，更长用日线），边界误差小于一个 K 线周期；当前未收盘的 K 线计入当前窗口。标「样本不完整」的窗口是该市场历史短于窗口长度，按实际覆盖计算并注明覆盖时长，不冒充完整。</p>' +
+      '</div></details>';
+    return html;
+  }
+  function flowLiveHtml(symbol, market) {
+    var st = getFlow(symbol, market);
+    var ov = S.coin && S.coin.symbol === symbol ? S.coin.overview : null;
+    if (!ov) return '<div class="blk" id="coin-wait-overview"><p class="progress-line">正在确认该币种市场…</p></div>';
+    if (st.status === 'unsupported') {
+      return '<div class="blk empty-blk"><div class="big">' + (market === 'spot' ? '无现货市场' : '无永续合约') + '</div><p>币安没有该币种的 ' + (market === 'spot' ? 'USDT 现货交易对' : 'USDT 永续合约') + '，本页无数据可算。</p></div>';
+    }
+    if (st.status === 'error') {
+      return '<div class="blk empty-blk"><div class="big">K 线接口未取回</div><p>币安 K 线接口本次未返回可用数据。<button class="refresh-btn" style="margin-left:8px" onclick="window.__vxFlowReset(\'' + market + '\')">重试</button></p></div>';
+    }
+    if (st.status !== 'done') {
+      return '<div class="blk"><p class="progress-line">正在读取 ' + (market === 'spot' ? '现货' : '合约') + ' K 线（1 分钟 / 5 分钟 / 小时 / 日线）并汇总各窗口资金流…</p></div>';
+    }
+    var sub = S.coin.sub[market];
+    if (sub === 'main') return flowMainHtml(symbol, market, st);
+    return flowSeriesHtml(symbol, market, st, sub);
+  }
+  function flowMainHtml(symbol, market, st) {
+    var now = Date.now();
+    var cap = coinMarketCap(symbol);
+    var rows = FLOW_WINDOWS.map(function (w) {
+      var s = flowWindow(st, w[0], now);
+      if (!s) return '<tr><td class="fw">' + w[1] + '</td><td colspan="5" class="cov-cell" style="text-align:left">该粒度 K 线未取回</td></tr>';
+      var ratio = cap ? (s.in + s.out) / cap * 100 : null;
+      var partial = !s.complete;
+      return '<tr><td class="fw">' + w[1] + (partial ? '<span class="cov-badge warn">样本不完整 · 覆盖 ' + fmtDur(now - s.sinceMs) + '</span>' : '') + '</td>' +
+        '<td>' + fmtFlowAbs(s.in) + '</td>' +
+        '<td>' + fmtFlowAbs(s.out) + '</td>' +
+        '<td class="' + (s.net > 0 ? 'v-up' : s.net < 0 ? 'v-down' : '') + '">' + fmtFlowSigned(s.net) + '</td>' +
+        '<td class="' + (s.change === null ? '' : s.change > 0 ? 'v-up' : s.change < 0 ? 'v-down' : '') + '">' + (s.change === null ? '—' : fmtFlowSigned(s.change)) + '</td>' +
+        '<td>' + (ratio === null ? '—' : ratio.toFixed(2) + '%') + '</td></tr>';
+    }).join('');
+    return '<div class="blk"><div class="zlabel"><span>主力资金 · 全部成交主动方向（无大单过滤）</span><span style="margin-left:auto">更新 ' + fmtClock(now) + '</span></div>' +
+      '<div class="flow-scroll"><table class="flow-table"><thead><tr><th>时间</th><th>流入($)</th><th>流出($)</th><th>净流入($)</th><th>净流入变化($)</th><th>资金市值比</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<p class="cap-line">金额单位：美元；净流入变化为本窗口对比上一个等长窗口。窗口越长，K 线粒度越粗（日线窗口按整根日线归属）。</p></div>';
+  }
+  window.__vxHistSpan = function (market, span) {
+    if (!S.coin) return;
+    S.coin.histSpan[market] = span;
+    renderCoinBody();
+  };
+  function flowSeriesHtml(symbol, market, st, sub) {
+    var span = (S.coin.histSpan && S.coin.histSpan[market]) || '48h';
+    var buckets = flowBuckets(st, span);
+    var isFlow = sub === 'history';
+    var html = '<div class="blk"><div class="zlabel"><span>' + (isFlow ? '资金流历史 · 主力净流入（逐桶）' : '交易量历史 · 总成交额（逐桶）') + '</span>' +
+      '<span style="margin-left:auto" class="seg-switch">' +
+      '<button class="seg-btn' + (span === '48h' ? ' active' : '') + '" onclick="window.__vxHistSpan(\'' + market + '\',\'48h\')">近48小时</button>' +
+      '<button class="seg-btn' + (span === '30d' ? ' active' : '') + '" onclick="window.__vxHistSpan(\'' + market + '\',\'30d\')">近30天</button></span></div>';
+    if (!buckets.length) {
+      html += '<p class="progress-line" style="margin-top:10px">该粒度 K 线未取回，暂无序列可画。</p>';
+    } else {
+      var last = buckets[buckets.length - 1];
+      html += '<canvas class="flow-canvas tall" id="flow-series-canvas" data-market="' + market + '" data-sub="' + sub + '" data-span="' + span + '"></canvas>' +
+        '<p class="cap-line">柱：' + (isFlow ? '每桶净流入（绿）/ 净流出（红）' : '每桶总成交额') + ' · 黄绿线：收盘价走势（右轴口径，仅看形态）· 每桶 = ' + (span === '48h' ? '1 小时' : '1 天') + ' · 最近一桶' + (isFlow ? '净流入 <b class="' + (last.net > 0 ? 'v-up' : last.net < 0 ? 'v-down' : '') + '">' + fmtFlowSigned(last.net) + '</b>' : '成交额 <b>' + fmtFlowAbs(last.total) + '</b>') + ' 美元</p>';
+    }
+    return html + '</div>';
+  }
+  /* 柱 + 价格线叠加。bars: [{v, price}]，signed 时正绿负红。 */
+  function drawBarsLine(canvas, bars, signed) {
+    if (!bars.length) return;
+    var dpr = window.devicePixelRatio || 1;
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    var max = 0, pMin = Infinity, pMax = -Infinity;
+    bars.forEach(function (b) {
+      var a = Math.abs(b.v || 0); if (a > max) max = a;
+      if (b.price > 0) { if (b.price < pMin) pMin = b.price; if (b.price > pMax) pMax = b.price; }
+    });
+    if (!max) max = 1;
+    var padT = 8, padB = 8;
+    var zeroY = signed ? Math.round(h / 2) : h - padB;
+    var amp = signed ? (h / 2 - padT) : (h - padT - padB);
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, zeroY + 0.5); ctx.lineTo(w, zeroY + 0.5); ctx.stroke();
+    var step = w / bars.length;
+    var bw = Math.max(1, Math.floor(step * 0.66));
+    bars.forEach(function (b, i) {
+      var v = b.v || 0;
+      var bh = Math.max(v === 0 ? 0 : 1, Math.abs(v) / max * amp);
+      var x = step * i + (step - bw) / 2;
+      ctx.fillStyle = signed ? (v >= 0 ? '#2bea79' : '#ff3761') : '#5b5c60';
+      ctx.globalAlpha = 0.92;
+      ctx.fillRect(x, v >= 0 || !signed ? zeroY - bh : zeroY, bw, bh);
+    });
+    ctx.globalAlpha = 1;
+    if (pMax > pMin) {
+      var spanP = pMax - pMin || 1;
+      ctx.strokeStyle = '#d4de27'; ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      bars.forEach(function (b, i) {
+        var x = step * i + step / 2;
+        var y = padT + (1 - (b.price - pMin) / spanP) * (h - padT - padB);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+  }
+
+  /* ---------------- AI追踪（规则回溯，打开时现算） ----------------
+   * 数据全部来自资金流引擎的 K 线主动买卖汇总。规则（阈值写死在此与口径里）：
+   * R1 主力净流极端值：某完整小时主力净流入 ≥ 此前24小时逐时绝对均值的3倍，且占该小时
+   *    主力总流（流入+流出）≥ 20%（合约优先，无合约用现货；流出镜像）。
+   * R2 窗口转弱：24 小时价格涨幅 ≥ 8%，且现货+合约 24 小时净流入为正、4 小时净流入转负
+   *    → 上涨趋势减弱（下跌镜像）。
+   * R3 FOMO 异动：最近 24 小时内某 5 分钟价格变动 ≥ 1.5% 且成交额 ≥ 此前 5 分钟均值的 3 倍。 */
+  function hourlyNetMap(rows) {
+    var map = new Map();
+    (rows || []).forEach(function (r) {
+      var tot = Number(r[7]) || 0, tb = Number(r[10]) || 0;
+      map.set(Number(r[0]), { net: 2 * tb - tot, total: tot });
+    });
+    return map;
+  }
+  function aiEvents(symbol) {
+    var spot = getFlow(symbol, 'spot'), fut = getFlow(symbol, 'futures');
+    var now = Date.now();
+    var futMap = hourlyNetMap(fut.k1h), spotMap = hourlyNetMap(spot.k1h);
+    var futHas = futMap.size >= 49;
+    var primary = futHas ? futMap : spotMap, primaryName = futHas ? '合约' : '现货';
+    var curHour = Math.floor(now / 3600000) * 3600000;
+    var events = [];
+    if (primary.size >= 49) {
+      for (var h = curHour - 3600000; h >= curHour - 24 * 3600000; h -= 3600000) {
+        var cell = primary.get(h);
+        if (!cell) continue;
+        var base = 0, bn = 0;
+        for (var j = 1; j <= 24; j++) { var p = primary.get(h - j * 3600000); if (p) { base += Math.abs(p.net); bn++; } }
+        if (bn < 12) continue;
+        base /= bn;
+        if (base > 0 && Math.abs(cell.net) >= 3 * base && cell.total > 0 && Math.abs(cell.net) / cell.total >= 0.2) {
+          events.push({
+            time: h, kind: cell.net > 0 ? 'bull' : 'bear',
+            title: primaryName + '主力' + (cell.net > 0 ? '大幅净流入' : '大幅净流出'),
+            basis: '该小时' + primaryName + '主力净流' + (cell.net > 0 ? '入' : '出') + ' ' + fmtFlowAbs(cell.net) + ' 美元，为此前 24 小时逐时平均绝对净流的 ' + (Math.abs(cell.net) / base).toFixed(1) + ' 倍，占该小时总流 ' + (Math.abs(cell.net) / cell.total * 100).toFixed(0) + '%。',
+            tags: [primaryName + '资金', '主力异动'],
+          });
+        }
+      }
+    }
+    /* R2：窗口转弱（用窗口汇总，现货+合约合计） */
+    var t = S.coin && S.coin.overview && S.coin.overview.ticker ? S.coin.overview.ticker.payload : null;
+    var chg24 = t ? VX.finiteNumber(t.priceChangePercent) : null;
+    function winNet(st, wmin) { var s = flowWindow(st, wmin, now); return s ? s.net : null; }
+    var n4s = winNet(spot, 240), n4f = winNet(fut, 240), n24s = winNet(spot, 1440), n24f = winNet(fut, 1440);
+    if (chg24 !== null && n4s !== null && n24s !== null) {
+      var n4 = (n4s || 0) + (n4f || 0), n24 = (n24s || 0) + (n24f || 0);
+      var haveFut = n4f !== null && n24f !== null;
+      if ((n4f === null) === (n24f === null)) {
+        if (chg24 >= 8 && n24 > 0 && n4 < 0) events.push({ time: curHour, kind: 'risk', title: '上涨趋势减弱 · 注意保护本金', basis: '24 小时涨幅 ' + chg24.toFixed(1) + '%，主力 24 小时合计净流入 ' + fmtFlowSigned(n24) + ' 美元，但近 4 小时已转净流出 ' + fmtFlowSigned(n4) + ' 美元，高位承接减弱。', tags: ['价格', '多窗口资金', '风险提示'] });
+        else if (chg24 <= -8 && n24 < 0 && n4 > 0) events.push({ time: curHour, kind: 'bull', title: '下跌动能减弱', basis: '24 小时跌幅 ' + chg24.toFixed(1) + '%，主力 24 小时合计净流出 ' + fmtFlowSigned(n24) + ' 美元，但近 4 小时已转净流入 ' + fmtFlowSigned(n4) + ' 美元，抛压有所缓和。', tags: ['价格', '多窗口资金', '风险提示'] });
+      }
+    }
+    /* R3：FOMO（5 分钟线，合约优先） */
+    var k5 = (fut.k5m && fut.k5m.length >= 120) ? fut.k5m : (spot.k5m && spot.k5m.length >= 120 ? spot.k5m : null);
+    var k5Name = k5 === fut.k5m ? '合约' : '现货';
+    if (k5) {
+      var vols = k5.map(function (r) { return Number(r[7]) || 0; });
+      for (var i = k5.length - 1; i >= Math.max(100, k5.length - 288); i--) {
+        var o = Number(k5[i][1]), c = Number(k5[i][4]);
+        if (!o || !c) continue;
+        var mv = (c / o - 1) * 100;
+        if (Math.abs(mv) < 1.5) continue;
+        var bsum = 0, bc = 0;
+        for (var j = Math.max(0, i - 288); j < i; j++) { bsum += vols[j]; bc++; }
+        if (!bc) continue;
+        var bavg = bsum / bc;
+        if (bavg > 0 && vols[i] >= 3 * bavg) {
+          events.push({
+            time: Number(k5[i][0]), kind: mv > 0 ? 'bull' : 'bear',
+            title: 'FOMO ' + (mv > 0 ? '拉升' : '砸盘') + '异动',
+            basis: '该 5 分钟' + k5Name + '价格' + (mv > 0 ? '上涨' : '下跌') + ' ' + Math.abs(mv).toFixed(1) + '%，成交额 ' + fmtFlowAbs(vols[i]) + ' 美元，为此前 5 分钟平均成交额的 ' + (vols[i] / bavg).toFixed(1) + ' 倍。',
+            tags: ['5分钟', '量价异动'],
+          });
+          break; /* FOMO 只报最近一条，避免刷屏 */
+        }
+      }
+    }
+    var dedup = [];
+    events.sort(function (a, b) { return a.time - b.time; }).forEach(function (e) {
+      var prev = dedup[dedup.length - 1];
+      if (prev && prev.title === e.title && e.time - prev.time <= 3600000) return;
+      dedup.push(e);
+    });
+    return dedup.sort(function (a, b) { return b.time - a.time; }).slice(0, 10);
+  }
+  function aiTabHtml(symbol) {
+    return '<div class="zhead"><h2>AI追踪</h2><span class="en">AI Tracking</span><span class="right">规则回溯 · 打开时现算</span></div>' +
+      '<div id="ai-live">' + aiLiveHtml(symbol) + '</div>' +
+      '<details class="fold blk" style="margin-top:14px"><summary>规则口径</summary><div class="fold-body">' +
+      '<p>本页不是服务器推送，也没有历史存档：每次打开都用现货与合约 K 线的主动买卖汇总，按下列固定规则回溯近 24 小时，触发才生成事件卡，不触发就明示暂无异动，绝不编造。</p>' +
+      '<p>规则一（主力净流极端值）：某完整小时主力净流入 ≥ 此前 24 小时逐时绝对净流均值的 3 倍，且占该小时总流 ≥ 20%（合约优先，无合约用现货；流出镜像）。规则二（窗口转弱）：24 小时涨幅 ≥ 8% 且主力 24 小时净流入为正、近 4 小时转负（下跌镜像）。规则三（FOMO）：某 5 分钟价格变动 ≥ 1.5% 且成交额 ≥ 此前均值的 3 倍。</p>' +
+      '<p>参考产品 ValueScan 的 AI 追踪结合其支撑压力位（MSR）与多交易所资金、链上数据生成，规则未公开；本页规则全部写明在此，数据源仅为币安，结论只作辅助参考。</p>' +
+      '</div></details>';
+  }
+  function aiLiveHtml(symbol) {
+    var spot = getFlow(symbol, 'spot'), fut = getFlow(symbol, 'futures');
+    if (spot.status === 'unsupported' && fut.status === 'unsupported') {
+      return '<div class="blk empty-blk"><div class="big">无资金数据可回溯</div><p>币安没有该币种的现货与永续市场，AI 追踪无从计算。</p></div>';
+    }
+    var loading = (spot.status === 'loading' || spot.status === 'idle') || (fut.status === 'loading' || fut.status === 'idle');
+    var ready = spot.status === 'done' || fut.status === 'done';
+    if (loading || !ready) {
+      return '<div class="blk"><p class="progress-line">正在读取现货与合约 K 线并按规则回溯近 24 小时…</p></div>';
+    }
+    var events = aiEvents(symbol);
+    if (!events.length) {
+      return '<div class="blk empty-blk"><div class="big">近 24 小时暂无异动</div><p>主力净流极端值、窗口转弱、FOMO 三类规则均未触发。这不等于行情没有变化，只是没有达到本页写明的异动门槛。</p></div>';
+    }
+    return events.map(function (e) {
+      return '<div class="blk ai-card"><div class="zlabel"><span>' + fmtTime(e.time) + '（北京时间）</span>' +
+        '<span class="badge ' + (e.kind === 'bull' ? 'long' : e.kind === 'bear' ? 'short' : 'flat') + '" style="margin-left:auto">' + (e.kind === 'bull' ? '看涨异动' : e.kind === 'bear' ? '看跌异动' : '风险提示') + '</span></div>' +
+        '<div class="ai-title">' + esc(e.title) + '</div><p class="ai-basis">' + esc(e.basis) + '</p>' +
+        '<div class="tag-row">' + e.tags.map(function (tg) { return '<span class="pill">' + esc(tg) + '</span>'; }).join('') + '</div></div>';
+    }).join('<div style="height:14px"></div>');
+  }
+
+  /* ---------------- 主力成本（参考成本） ----------------
+   * 最接近的诚实等价物：CoinMetrics 的已实现价格 = 已实现市值 ÷ 流通供应
+   * =（市值 ÷ MVRV）÷ 供应，即全网持币者的平均成本。ValueScan 的主力成本是
+   * 链上「大户」平均买入价，人群口径不同，本页只标「参考」，不冒充其数值。
+   * 另给交易所口径的成交加权成本（VWAP）作第二参考。 */
+  var CM_COST_ASSETS = { BTC: 'btc', ETH: 'eth' };
+  function ensureCost(symbol) {
+    if (!S.coin || S.coin.symbol !== symbol) return;
+    if (S.coin.cost === undefined) {
+      S.coin.cost = null;
+      fetchCoinJson(VX.SPOT_HOSTS, '/api/v3/klines?symbol=' + symbol + 'USDT&interval=1d&limit=200', function (v) { return Array.isArray(v) && v.length >= 31; }, 9000)
+        .then(function (r) {
+          if (!S.coin || S.coin.symbol !== symbol) return;
+          S.coin.cost = r ? r.payload : null;
+          if (S.coin.tab === 'cost') renderCoinBody();
+        });
+    }
+    if (S.coin.realized === undefined && CM_COST_ASSETS[symbol]) {
+      S.coin.realized = 'loading';
+      var start = new Date(Date.now() - 20 * 86400000).toISOString().slice(0, 10);
+      var url = 'https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=' + CM_COST_ASSETS[symbol] +
+        '&metrics=CapMVRVCur,CapMrktCurUSD,SplyCur&frequency=1d&page_size=30&start_time=' + start;
+      VX.readJson(url, 10000).then(function (j) {
+        if (!S.coin || S.coin.symbol !== symbol) return;
+        var out = null;
+        if (j && Array.isArray(j.data) && j.data.length) {
+          var r = j.data[j.data.length - 1];
+          var mvrv = VX.finiteNumber(r.CapMVRVCur), cap = VX.finiteNumber(r.CapMrktCurUSD), sply = VX.finiteNumber(r.SplyCur);
+          if (mvrv && cap && sply) out = { realized: cap / mvrv / sply, mvrv: mvrv, time: new Date(r.time).getTime() };
+        }
+        S.coin.realized = out;
+        if (S.coin.tab === 'cost') renderCoinBody();
       });
     }
   }
+  function costTabHtml(symbol) {
+    var html = '<div class="zhead"><h2>主力成本</h2><span class="en">Cost Basis</span><span class="right">参考成本 · 非 ValueScan 数值</span></div>';
+    var t = S.coin && S.coin.overview && S.coin.overview.ticker ? S.coin.overview.ticker.payload : null;
+    var price = t ? VX.finiteNumber(t.lastPrice) : null;
+    function cell(k, v, s) { return '<div class="blk stat-blk"><span class="k">' + k + '</span><span class="v" style="font-size:16px">' + v + '</span>' + (s ? '<span class="s">' + s + '</span>' : '') + '</div>'; }
+    /* 已实现价格（链上全网平均成本） */
+    var rz = S.coin ? S.coin.realized : undefined;
+    if (CM_COST_ASSETS[symbol]) {
+      if (rz === undefined || rz === 'loading') {
+        html += '<div class="blk"><p class="progress-line">正在读取 CoinMetrics 已实现价格…</p></div>';
+      } else if (rz) {
+        html += '<div class="zhead"><h2 style="font-size:15px">链上参考成本</h2><span class="en">Realized Price</span><span class="right">CoinMetrics · ' + fmtTime(rz.time) + '</span></div>' +
+          '<div class="grid grid-3">' +
+          cell('全网平均持币成本', fmtPrice(rz.realized), '已实现价格 · 截至 ' + fmtTime(rz.time)) +
+          cell('MVRV', rz.mvrv.toFixed(3), '市值 ÷ 已实现市值') +
+          cell('现价相对成本', price !== null ? fmtChange((price / rz.realized - 1) * 100) : '—', price !== null ? (price >= rz.realized ? '现价在全网成本线上方' : '现价在全网成本线下方') : '') +
+          '</div>';
+      } else {
+        html += '<div class="blk empty-blk"><p>CoinMetrics 已实现价格本次未取回，下方交易所口径参考成本不受影响。</p></div>';
+      }
+    }
+    /* VWAP（交易所成交加权成本） */
+    var rows = S.coin ? S.coin.cost : undefined;
+    html += '<div class="zhead"><h2 style="font-size:15px">交易所参考成本</h2><span class="en">VWAP</span><span class="right">币安现货日线</span></div>';
+    if (rows === undefined) {
+      html += '<div class="blk"><p class="progress-line">正在读取日线计算成交加权成本…</p></div>';
+    } else if (!Array.isArray(rows)) {
+      html += '<div class="blk empty-blk"><div class="big">日线未取回</div><p>币安现货日线本次未取回，成交加权成本无法计算。</p></div>';
+    } else {
+      var now = Date.now();
+      var closed = rows.filter(function (r) { return Number(r[6]) < now; });
+      function vwap(list) {
+        var q = 0, v = 0;
+        list.forEach(function (r) { q += Number(r[7]) || 0; v += Number(r[5]) || 0; });
+        return v > 0 ? q / v : null;
+      }
+      var v90 = vwap(closed.slice(-90)), v30 = vwap(closed.slice(-30));
+      var lastClose = closed.length ? Number(closed[closed.length - 1][4]) : null;
+      var px = price !== null ? price : lastClose;
+      html += '<div class="grid grid-4">' +
+        cell('90 日 VWAP', v90 === null ? '—' : fmtPrice(v90), '近 90 根日线成交量加权') +
+        cell('30 日 VWAP', v30 === null ? '—' : fmtPrice(v30), '近 30 根日线成交量加权') +
+        cell('现价', px === null ? '—' : fmtPrice(px), '') +
+        cell('现价相对 90 日 VWAP', (px !== null && v90) ? fmtChange((px / v90 - 1) * 100) : '—', '') +
+        '</div>' +
+        '<div class="blk" style="margin-top:14px"><p class="verdict-why" style="margin:0">VWAP 是近 90 天币安现货每单位成交的平均价格，反映市场成交重心，不是任何具体机构的持仓成本。</p></div>';
+    }
+    html += '<details class="fold blk" style="margin-top:14px"><summary>口径说明</summary><div class="fold-body">' +
+      '<p>参考产品 ValueScan 的「主力成本」按其官方手册是<b>链上大户的平均买入价</b>，来自带标签的大户地址数据，静态版没有链上标签库，无法复现，也不会拿本页数字冒充它（其 BTC 链上成本在核查时约为 $60,226，与本页的全网口径不是一回事）。</p>' +
+      '<p>本页链上参考成本是 CoinMetrics 的已实现价格：已实现市值（市值 ÷ MVRV）÷ 流通供应，即全网持币者按其币最后一次链上移动价格计算的平均成本，是公开数据里最接近「主力成本」概念的诚实等价物，但人群是全网而非仅大户。CoinMetrics 社区版的已实现市值原始指标对免费层不可用，本页用其开放的 MVRV 与市值、供应三项反推，公式写明在此，可自行复核。</p>' +
+      '</div></details>';
+    return html;
+  }
+
+  /* ---------------- 链上地址（静态版不可用，如实说明） ---------------- */
+  function chainTabHtml(symbol) {
+    return '<div class="zhead"><h2>链上地址</h2><span class="en">On-chain Holders</span></div>' +
+      '<div class="blk empty-blk"><div class="big">静态版暂无此数据</div>' +
+      '<p>持币地址分布（筹码集中度）需要链上全量解析与地址标签数据，浏览器直连的免费公开接口提供不了：本次已逐项核查——CoinMetrics 社区版的地址余额分档指标对免费层返回 403，Blockchair、mempool.space 均无持仓分布或富豪榜公开接口。</p>' +
+      '<p>参考产品 ValueScan 的这一页来自其链上数据服务。要上这一页，需要接入链上数据服务商（服务端），静态版不拿别的数据冒充。接入后这里会显示持币地址数与各余额档位的地址分布。</p></div>';
+  }
+
+  /* ---------------- 代币流向（CoinMetrics 交易所流，仅 BTC/ETH） ---------------- */
+  var CM_FLOW_ASSETS = { BTC: 'btc', ETH: 'eth' };
+  function ensureTokenFlow(symbol) {
+    if (!S.coin || S.coin.symbol !== symbol || S.coin.chainFlow !== undefined) return;
+    var asset = CM_FLOW_ASSETS[symbol];
+    if (!asset) { S.coin.chainFlow = null; return; }
+    S.coin.chainFlow = 'loading';
+    var start = new Date(Date.now() - 45 * 86400000).toISOString().slice(0, 10);
+    var url = 'https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=' + asset +
+      '&metrics=FlowInExUSD,FlowOutExUSD&frequency=1d&page_size=100&start_time=' + start;
+    VX.readJson(url, 10000).then(function (j) {
+      if (!S.coin || S.coin.symbol !== symbol) return;
+      var rows = null;
+      if (j && Array.isArray(j.data)) {
+        rows = j.data.map(function (r) {
+          var i = VX.finiteNumber(r.FlowInExUSD), o = VX.finiteNumber(r.FlowOutExUSD);
+          if (i === null || o === null) return null;
+          return { time: new Date(r.time).getTime(), in: i, out: o, net: i - o };
+        }).filter(Boolean).sort(function (a, b) { return a.time - b.time; });
+        if (!rows.length) rows = null;
+      }
+      S.coin.chainFlow = rows ? { rows: rows.slice(-14) } : null;
+      if (S.coin.tab === 'tokenflow') renderCoinBody();
+    });
+  }
+  function tokenFlowHtml(symbol) {
+    var html = '<div class="zhead"><h2>代币流向</h2><span class="en">Exchange Flows</span><span class="right">CoinMetrics · 日频</span></div>';
+    if (!CM_FLOW_ASSETS[symbol]) {
+      html += '<div class="blk empty-blk"><div class="big">' + esc(symbol) + ' 暂无交易所流向数据</div><p>CoinMetrics 社区版的交易所流入/流出指标只覆盖 BTC 与 ETH，已逐个核查：SOL、XRP、LTC、DOGE 等均返回不支持。其余币种本页不出数，不拿别的数据冒充。</p></div>';
+      return html;
+    }
+    var cf = S.coin ? S.coin.chainFlow : undefined;
+    if (cf === undefined || cf === 'loading') {
+      html += '<div class="blk"><p class="progress-line">正在读取 CoinMetrics 交易所流向…</p></div>';
+    } else if (!cf) {
+      html += '<div class="blk empty-blk"><div class="big">流向数据未取回</div><p>CoinMetrics 社区接口本次未返回数据，稍后重开本页会再试。</p></div>';
+    } else {
+      var rows = cf.rows, last = rows[rows.length - 1];
+      function cell(k, v, cls) { return '<div class="blk stat-blk"><span class="k">' + k + '</span><span class="v ' + (cls || '') + '" style="font-size:16px">' + v + '</span></div>'; }
+      html += '<div class="grid grid-3">' +
+        cell('最近一日流入交易所', fmtUsd(last.in)) +
+        cell('最近一日流出交易所', fmtUsd(last.out)) +
+        cell('净流入交易所', fmtUsd(Math.abs(last.net)) + (last.net >= 0 ? '' : '（净流出）'), last.net >= 0 ? 'v-down' : 'v-up') +
+        '</div>' +
+        '<div class="blk" style="margin-top:14px"><div class="zlabel"><span>近 ' + rows.length + ' 日净流入交易所（逐日）</span><span style="margin-left:auto">截至 ' + fmtTime(last.time) + '</span></div>' +
+        '<canvas class="flow-canvas" id="tokenflow-canvas"></canvas>' +
+        '<p class="cap-line">正值 = 当日净流入交易所（红），负值 = 净流出交易所（绿）。链上转入交易所常被解读为潜在卖压、转出为提币囤积，这只是通行解读，不是结论。</p></div>';
+    }
+    html += '<details class="fold blk" style="margin-top:14px"><summary>口径说明</summary><div class="fold-body">' +
+      '<p>数据来自 CoinMetrics 社区版 API 的交易所流入/流出指标（FlowInExUSD / FlowOutExUSD），统计全网主要交易所地址的链上转入与转出金额，日频；最新值标记为 flash 初值，后续会被修订，页面按取到的原值展示并标注日期。</p>' +
+      '<p>参考产品 ValueScan 的代币流向来自其自有交易所地址标签库，覆盖范围与数值口径与 CoinMetrics 不完全一致，不可直接对比。</p>' +
+      '</div></details>';
+    return html;
+  }
+
+
   window.__vxCoin = function (sym) {
     var target = '#/coin/' + sym;
     if (location.hash === target) applyRoute('coin', sym);
