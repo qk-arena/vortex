@@ -155,6 +155,8 @@ details.fold .fold-body p { margin: 4px 0; }
 .flow-table th:first-child { text-align: left; }
 .flow-table td { text-align: right; padding: 7px 4px; border-bottom: 1px solid var(--line); color: var(--text-secondary); }
 .flow-table td.fw { text-align: left; color: var(--muted); white-space: nowrap; }
+.flow-table td.v-up { color: var(--up); }
+.flow-table td.v-down { color: var(--down); }
 .flow-table td.cov-cell { text-align: right; width: 74px; }
 .flow-table tr:last-child td { border-bottom: none; }
 .cov-badge { font-size: 10.5px; color: var(--weak); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 7px; white-space: nowrap; }
@@ -2994,8 +2996,8 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       var ratio = cap ? (s.in + s.out) / cap * 100 : null;
       var partial = !s.complete;
       return '<tr><td class="fw">' + w[1] + (partial ? '<span class="cov-badge warn">样本不完整 · 覆盖 ' + fmtDur(now - s.sinceMs) + '</span>' : '') + '</td>' +
-        '<td>' + fmtFlowAbs(s.in) + '</td>' +
-        '<td>' + fmtFlowAbs(s.out) + '</td>' +
+        '<td class="v-up">' + fmtFlowAbs(s.in) + '</td>' +
+        '<td class="v-down">' + fmtFlowAbs(s.out) + '</td>' +
         '<td class="' + (s.net > 0 ? 'v-up' : s.net < 0 ? 'v-down' : '') + '">' + fmtFlowSigned(s.net) + '</td>' +
         '<td class="' + (s.change === null ? '' : s.change > 0 ? 'v-up' : s.change < 0 ? 'v-down' : '') + '">' + (s.change === null ? '—' : fmtFlowSigned(s.change)) + '</td>' +
         '<td>' + (ratio === null ? '—' : ratio.toFixed(2) + '%') + '</td></tr>';
@@ -3325,9 +3327,9 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       var rows = cf.rows, last = rows[rows.length - 1];
       function cell(k, v, cls) { return '<div class="blk stat-blk"><span class="k">' + k + '</span><span class="v ' + (cls || '') + '" style="font-size:16px">' + v + '</span></div>'; }
       html += '<div class="grid grid-3">' +
-        cell('最近一日流入交易所', fmtUsd(last.in)) +
-        cell('最近一日流出交易所', fmtUsd(last.out)) +
-        cell('净流入交易所', fmtUsd(Math.abs(last.net)) + (last.net >= 0 ? '' : '（净流出）'), last.net >= 0 ? 'v-down' : 'v-up') +
+        cell('最近一日流入交易所', fmtUsd(last.in), 'v-up') +
+        cell('最近一日流出交易所', fmtUsd(last.out), 'v-down') +
+        cell('净流入交易所', fmtUsd(Math.abs(last.net)) + (last.net >= 0 ? '' : '（净流出）'), last.net > 0 ? 'v-up' : last.net < 0 ? 'v-down' : '') +
         '</div>' +
         '<div class="blk" style="margin-top:14px"><div class="zlabel"><span>近 ' + rows.length + ' 日净流入交易所（逐日）</span><span style="margin-left:auto">截至 ' + fmtTime(last.time) + '</span></div>' +
         '<canvas class="flow-canvas" id="tokenflow-canvas"></canvas>' +
