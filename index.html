@@ -148,6 +148,27 @@ details.fold .fold-body p { margin: 4px 0; }
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 14px; color: var(--accent);
 }
+
+/* ---------- 官方 logo（币安资产 CDN 主源，失败链回退） ---------- */
+.coin-logo {
+  position: relative; border-radius: 50%; overflow: hidden; flex: none;
+  background: var(--panel-inset); border: 1px solid var(--line-strong);
+  display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
+}
+.coin-logo i { font-style: normal; font-weight: 800; color: var(--accent); line-height: 1; }
+.coin-logo img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; display: block; border-radius: 50%;
+}
+.coin-logo.plan { width: 40px; height: 40px; }
+.coin-logo.plan i { font-size: 15px; }
+.coin-logo.lg { width: 40px; height: 40px; }
+.coin-logo.lg i { font-size: 15px; }
+.coin-logo.sm { width: 18px; height: 18px; border: none; background: transparent; }
+.coin-logo.sm i { font-size: 10px; }
+.sym-l { display: inline-flex; align-items: center; gap: 6px; }
+.stat-blk .k.k-logo { display: flex; align-items: center; gap: 6px; }
+.idx-blk .nm.nm-logo { display: flex; align-items: center; gap: 6px; }
 .plan-name { font-size: 16px; font-weight: 700; }
 .plan-name small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); }
 .plan-score { margin-left: auto; text-align: right; }
@@ -971,6 +992,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       return [{
         id: String(item.id == null ? symbol.toLowerCase() : item.id), symbol: symbol,
         name: String(item.name == null ? symbol : item.name), marketCapRank: rank,
+        image: item.image ? String(item.image) : null,
         marketCap: Number.isFinite(Number(item.market_cap)) ? Number(item.market_cap) : null,
         updatedAt: item.last_updated ? String(item.last_updated) : null,
       }];
@@ -1561,6 +1583,76 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   function fmtTime(ts) { return ts ? dtf.format(new Date(ts)) : '—'; }
   function fmtClock(ts) { return ts ? dtfS.format(new Date(ts)) : '—'; }
   function hostOf(url) { try { return new URL(url).hostname; } catch (e) { return ''; } }
+
+  /* ---------------- 官方 logo ----------------
+   * 主源：币安资产 CDN（交易所官方）。币安没有的币（非币安资产，如 CC/CRO/LEO/OKB/M/RAIN/BTW，
+   * 币安 CDN 返回 403）按顺序回退：已逐个验证 200 的 CoinGecko 官方资产图覆盖表 →
+   * 市值池数据自带的 CoinGecko image 字段。全部来源都失败才露出字母（仅 DOM 兜底，避免裂图）。 */
+  var LOGO_OVERRIDES = {
+    CC: 'https://coin-images.coingecko.com/coins/images/70468/large/Canton-Ticker_%281%29.png?1762826299',
+    CRO: 'https://coin-images.coingecko.com/coins/images/7310/large/CRO.png?1794186148',
+    LEO: 'https://coin-images.coingecko.com/coins/images/8418/large/leo-token.png?1696508607',
+    OKB: 'https://coin-images.coingecko.com/coins/images/4463/large/WeChat_Image_20220118095654.png?1696505053',
+    M: 'https://coin-images.coingecko.com/coins/images/53247/large/square-bg-transparent.png?1752637478',
+    RAIN: 'https://coin-images.coingecko.com/coins/images/69134/large/Rain_logo_1_.png?1762952191',
+    BTW: 'https://coin-images.coingecko.com/coins/images/71205/large/BTW_Token_200x200.png?1786291907',
+  };
+  function geckoLogo(sym) {
+    if (typeof S !== 'undefined' && S.marketCaps && Array.isArray(S.marketCaps.payload)) {
+      for (var i = 0; i < S.marketCaps.payload.length; i++) {
+        var row = S.marketCaps.payload[i];
+        if (row && row.symbol === sym && row.image) return row.image;
+      }
+    }
+    return null;
+  }
+  var bnbLogoDead = false;
+  (function probeBnbLogo() {
+    var p = new Image();
+    p.onload = function () { bnbLogoDead = false; };
+    p.onerror = function () { bnbLogoDead = true; };
+    p.src = 'https://bin.bnbstatic.com/static/assets/logos/BTC.png';
+  })();
+  function logoSources(sym) {
+    var bnb = 'https://bin.bnbstatic.com/static/assets/logos/' + encodeURIComponent(sym) + '.png';
+    var out = bnbLogoDead ? [] : [bnb];
+    var g = LOGO_OVERRIDES[sym] || geckoLogo(sym);
+    if (g && out.indexOf(g) < 0) out.push(g);
+    var g2 = geckoLogo(sym);
+    if (g2 && out.indexOf(g2) < 0) out.push(g2);
+    if (bnbLogoDead) out.push(bnb);
+    return out;
+  }
+  function coinLogoHtml(sym, cls) {
+    sym = String(sym || '').toUpperCase();
+    var srcs = logoSources(sym);
+    return '<span class="coin-logo ' + cls + '"><i>' + esc(sym.charAt(0) || '?') + '</i>' +
+      '<img src="' + esc(srcs[0]) + '" data-sym="' + esc(sym) + '" data-step="0" alt="" onerror="window.__vxLogoErr(this)"></span>';
+  }
+  window.__vxLogoErr = function (img) {
+    var sym = img.getAttribute('data-sym') || '';
+    var step = Number(img.getAttribute('data-step') || 0) + 1;
+    var srcs = logoSources(sym);
+    if (step < srcs.length) {
+      img.setAttribute('data-step', String(step));
+      img.src = srcs[step];
+      return;
+    }
+    /* 整条来源链都失败：多半是瞬时网络问题（限流/超时）或市值池还没回来（图源会变多）。
+     * 退避后整链重跑，最多再试 2 轮；仍失败才露出字母兜底，避免裂图。 */
+    var rounds = Number(img.getAttribute('data-rounds') || 0);
+    if (rounds < 2) {
+      img.setAttribute('data-rounds', String(rounds + 1));
+      setTimeout(function () {
+        if (!img.isConnected || img.naturalWidth) return;
+        var again = logoSources(sym);
+        img.setAttribute('data-step', '0');
+        img.src = again[0] + (again[0].indexOf('?') >= 0 ? '&' : '?') + 'vxretry=' + (rounds + 1);
+      }, rounds === 0 ? 3000 : 8000);
+    } else {
+      img.style.display = 'none';
+    }
+  };
   function sparkline(history, color) {
     if (!history || history.length < 2) return '';
     var values = history.map(function (p) { return p.value; });
@@ -1794,7 +1886,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var product = plan.market === 'futures' ? '币安 U 本位永续合约' : '币安现货';
     var horizonLabel = plan.horizon === '1d' ? '日线 1D' : plan.horizon === '12h' ? '12 小时 12H' : plan.horizon.toUpperCase();
     var html = '<article class="blk plan-card">';
-    html += '<div class="plan-top"><div class="plan-id"><div class="plan-logo">' + esc(plan.symbol.charAt(0)) + '</div>' +
+    html += '<div class="plan-top"><div class="plan-id">' + coinLogoHtml(plan.symbol, 'plan') +
       '<div class="plan-name">' + esc(plan.symbol) + '<small>' + esc(product) + ' · ' + esc(horizonLabel) + '</small></div></div>' +
       '<div class="plan-score"><b>' + plan.score + '</b><small>执行证据分</small></div></div>';
     html += '<div class="tag-row"><span class="badge ' + dirClass + '">' + esc(plan.direction) + '</span>' +
@@ -1887,8 +1979,8 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     function trendClass(a) { return !a ? '' : a.change24h > 0 ? 'v-up' : a.change24h < 0 ? 'v-down' : ''; }
     html += '<div class="grid grid-4">' +
       '<div class="blk stat-blk tap" onclick="window.__vxGo(\'market\')"><span class="k">市场宽度</span><span class="v">' + ov.breadth.upRatio.toFixed(1) + '%</span><span class="s">上涨 ' + ov.breadth.up + ' / ' + (ov.breadth.up + ov.breadth.down + ov.breadth.unchanged) + ' 个现货对</span></div>' +
-      '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'BTC\')"><span class="k">BTC 趋势</span><span class="v ' + trendClass(btcA) + '">' + trendWord(btcA) + '</span><span class="s">24H ' + (btcA ? fmtChange(btcA.change24h) : '数据缺失') + '</span></div>' +
-      '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'ETH\')"><span class="k">ETH 趋势</span><span class="v ' + trendClass(ethA) + '">' + trendWord(ethA) + '</span><span class="s">24H ' + (ethA ? fmtChange(ethA.change24h) : '数据缺失') + '</span></div>' +
+      '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'BTC\')"><span class="k k-logo">' + coinLogoHtml('BTC', 'sm') + 'BTC 趋势</span><span class="v ' + trendClass(btcA) + '">' + trendWord(btcA) + '</span><span class="s">24H ' + (btcA ? fmtChange(btcA.change24h) : '数据缺失') + '</span></div>' +
+      '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'ETH\')"><span class="k k-logo">' + coinLogoHtml('ETH', 'sm') + 'ETH 趋势</span><span class="v ' + trendClass(ethA) + '">' + trendWord(ethA) + '</span><span class="s">24H ' + (ethA ? fmtChange(ethA.change24h) : '数据缺失') + '</span></div>' +
       '<div class="blk stat-blk tap" onclick="window.__vxGo(\'market\')"><span class="k">恐惧贪婪</span><span class="v v-accent">' + (ov.fearGreed === null ? '—' : ov.fearGreed) + '</span><span class="s">' + (ov.fearGreed === null ? '数据缺失' : esc(ov.fearGreedLabel || VX.fearGreedBand(ov.fearGreed))) + '</span></div></div>';
 
     /* 脉搏：6 个独立行情块 + 3 个独立统计块 */
@@ -1897,8 +1989,8 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var bySymbol = new Map(spotRows.map(function (r) { return [r.symbol, r]; }));
     html += '<div class="grid grid-3">' + pulseSymbols.map(function (sym) {
       var r = bySymbol.get(sym + 'USDT');
-      if (!r) return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><b>' + sym + '</b></div><div class="p">—</div><div class="c" style="color:var(--weak)">行情待同步</div></div>';
-      return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><b>' + sym + '</b><span>' + fmtUsd(r.quoteVolume24h) + '</span></div>' +
+      if (!r) return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><span class="sym-l">' + coinLogoHtml(sym, 'sm') + '<b>' + sym + '</b></span></div><div class="p">—</div><div class="c" style="color:var(--weak)">行情待同步</div></div>';
+      return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><span class="sym-l">' + coinLogoHtml(sym, 'sm') + '<b>' + sym + '</b></span><span>' + fmtUsd(r.quoteVolume24h) + '</span></div>' +
         '<div class="p">' + fmtPrice(r.price) + '</div>' +
         '<div class="c ' + (r.change24h >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(r.change24h) + '</div></div>';
     }).join('') + '</div>';
@@ -2111,21 +2203,21 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         '<div class="ch ' + (m.change !== null && m.change >= 0 ? 'v-up' : 'v-down') + '">' + (m.change === null ? '—' : fmtChange(m.change)) + '</div>' +
         '<span class="st">' + esc(m.status) + (m.updatedAt ? ' · ' + fmtTime(m.updatedAt) : '') + '</span></div>';
     }
-    idxBox.innerHTML = '<div class="blk idx-blk" id="idx-btc"><div class="nm">BTC</div><div class="vl">…</div><span class="st">读取中</span></div>';
+    idxBox.innerHTML = '<div class="blk idx-blk" id="idx-btc"><div class="nm nm-logo">' + coinLogoHtml('BTC', 'sm') + 'BTC</div><div class="vl">…</div><span class="st">读取中</span></div>';
     VX.firstOfficialJson(VX.SPOT_HOSTS.map(function (h) { return h + '/api/v3/ticker/24hr?symbol=BTCUSDT'; }),
       function (v) { return v && v.symbol === 'BTCUSDT'; }, 4000).then(function (res) {
         var now = Date.now();
         var btcTile;
         if (!res) {
-          btcTile = '<div class="blk idx-blk"><div class="nm">BTC</div><div class="vl">—</div><span class="st">暂不可用 · Binance 现货</span></div>';
+          btcTile = '<div class="blk idx-blk"><div class="nm nm-logo">' + coinLogoHtml('BTC', 'sm') + 'BTC</div><div class="vl">—</div><span class="st">暂不可用 · Binance 现货</span></div>';
         } else {
           var price = VX.finiteNumber(res.payload.lastPrice), change = VX.finiteNumber(res.payload.priceChangePercent);
           var closeTime = VX.finiteNumber(res.payload.closeTime);
           var ok = price !== null && price > 0 && closeTime !== null && Math.abs(now - closeTime) <= 60000 && change !== null;
           btcTile = ok
-            ? '<div class="blk idx-blk"><div class="nm">BTC</div><div class="vl">' + fmtPrice(price) + ' <small style="font-size:11px;color:var(--muted)">USDT</small></div>' +
+            ? '<div class="blk idx-blk"><div class="nm nm-logo">' + coinLogoHtml('BTC', 'sm') + 'BTC</div><div class="vl">' + fmtPrice(price) + ' <small style="font-size:11px;color:var(--muted)">USDT</small></div>' +
               '<div class="ch ' + (change >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(change) + '</div><span class="st">24H · 已核验 · Binance 现货</span></div>'
-            : '<div class="blk idx-blk"><div class="nm">BTC</div><div class="vl">—</div><span class="st">暂不可用 · Binance 现货</span></div>';
+            : '<div class="blk idx-blk"><div class="nm nm-logo">' + coinLogoHtml('BTC', 'sm') + 'BTC</div><div class="vl">—</div><span class="st">暂不可用 · Binance 现货</span></div>';
         }
         var slot = document.getElementById('idx-btc');
         if (slot) {
@@ -2453,6 +2545,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var pair = symbol + 'USDT';
     root.innerHTML =
       '<div class="coin-top"><button class="refresh-btn" onclick="window.__vxGo(\'today\')">← 返回今日</button>' +
+      coinLogoHtml(symbol, 'lg') +
       '<span class="coin-title">' + esc(symbol) + '<small>' + esc(pair) + ' · 币安公开行情</small></span></div>' +
       '<div class="blk"><p class="progress-line">正在读取 ' + esc(symbol) + ' 实时行情（现货 24H · 小时 K 线 · 合约数据）…</p></div>' +
       '<div id="coin-plans">' + coinPlanSectionHtml(symbol) + '</div>';
@@ -2473,6 +2566,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var now = Date.now();
     var pair = symbol + 'USDT';
     var html = '<div class="coin-top"><button class="refresh-btn" onclick="window.__vxGo(\'today\')">← 返回今日</button>' +
+      coinLogoHtml(symbol, 'lg') +
       '<span class="coin-title">' + esc(symbol) + '<small>' + esc(pair) + ' · 币安公开行情</small></span></div>';
     var t = d.ticker && d.ticker.payload;
     if (t) {
