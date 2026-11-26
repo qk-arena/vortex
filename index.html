@@ -53,10 +53,6 @@ a { color: var(--accent); text-decoration: none; }
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--up); display: inline-block; margin-right: 6px; }
 .live-dot.off { background: var(--down); }
 .top-meta { font-size: 11px; color: var(--muted); }
-.edition-tag {
-  font-size: 10px; color: var(--accent); border: 1px solid var(--line-strong);
-  padding: 3px 8px; border-radius: 999px; letter-spacing: 1px;
-}
 
 /* ---------- 布局与方块 ---------- */
 .page { max-width: 1060px; margin: 0 auto; padding: 14px 14px 96px; }
@@ -92,7 +88,6 @@ a { color: var(--accent); text-decoration: none; }
 .status-strip { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
 .status-strip .item b { font-weight: 600; }
 .status-strip .item span { color: var(--muted); margin-right: 6px; font-size: 12px; }
-.status-strip .src { width: 100%; font-size: 11px; color: var(--weak); }
 
 /* ---------- 定调块 ---------- */
 .verdict-word { font-size: 33px; font-weight: 800; line-height: 1.15; margin: 4px 0 6px; }
@@ -131,6 +126,17 @@ details.fold .fold-body p { margin: 4px 0; }
 .pulse-blk .sym b { color: var(--text); font-size: 13px; }
 .pulse-blk .p { font-size: 16px; font-weight: 700; margin-top: 3px; }
 .pulse-blk .c { font-size: 12px; }
+
+/* ---------- 可点块与币种详情 ---------- */
+.tap { cursor: pointer; transition: transform .08s ease, border-color .08s ease; }
+.tap:active { transform: scale(.985); border-color: var(--line-strong); }
+.coin-top { display: flex; align-items: center; gap: 12px; }
+.coin-title { font-size: 17px; font-weight: 800; }
+.coin-title small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); }
+.coin-price-row { display: flex; align-items: baseline; gap: 12px; margin-top: 6px; }
+.coin-price { font-size: 27px; font-weight: 800; }
+.coin-chg { font-size: 15px; font-weight: 700; }
+.chart-canvas { width: 100%; height: 190px; display: block; margin-top: 8px; }
 
 /* ---------- 机会卡 ---------- */
 .plan-card { display: block; }
@@ -250,7 +256,6 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   <div class="brand">VORTEX<small>全景交易系统 · 静态版</small></div>
   <div class="spacer"></div>
   <span class="top-meta" id="top-clock"><span class="live-dot off" id="top-dot"></span><span id="top-state">连接中</span></span>
-  <span class="edition-tag">STATIC</span>
 </header>
 
 <main class="page">
@@ -326,7 +331,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       <div class="blk doc-blk">
         <h3>数据从哪来</h3>
         <p>全部由你的浏览器直连公开接口，本站没有服务器代取：币安现货与 U 本位合约官方 REST（多主机依次回退，K 线预算 2200ms、行情 1800ms）；市值排名 CoinGecko / CoinLore / CoinPaprika；恐惧贪婪指数 Alternative.me；BTC 市占率 CoinGecko / CoinPaprika 全球数据。每个数字都带抓取时间；页面显示的时间为北京时间。</p>
-        <p>A 股 / 美股价格温度（本站模型）与全球指数依赖 Yahoo Finance 历史数据，该源未开放浏览器跨域读取，静态版无法直连，相关块只显示「暂不可用」与原因，不用任何替代数据冒充。爆仓数据没有公开的历史汇总接口：静态版尝试用币安合约爆仓事件流在本页打开期间实时观察并明确标注样本口径，连不上时显示暂无可靠数据源。</p>
+        <p>全球指数来自腾讯行情公开接口（指数报价与日线收盘历史）；A 股 / 美股价格温度为本站模型，用上证指数与标普500的日线收盘在本页内计算。MVRV-Z 需要链上已实现市值数据，尚无已授权且可核验的浏览器可直连来源，市场页已不展示该块，不从价格曲线猜测。爆仓数据没有公开的历史汇总接口：静态版尝试用币安合约爆仓事件流在本页打开期间实时观察并明确标注样本口径，连不上时显示暂无可靠数据源。</p>
       </div>
       <div class="blk doc-blk">
         <h3>静态版与服务端版的差异</h3>
@@ -342,6 +347,13 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         <p>本页所有内容是数据与规则的机械呈现，不构成投资建议。加密货币波动剧烈，计划中的止损、失效条件是规则的一部分，不是收益保证。执行前请回到交易所核对最新价格与合约状态。</p>
         <p class="dim">VORTEX 静态版 · 数据源与抓取时间标注于各页 · 页面版本随源码仓库更新。</p>
       </div>
+    </div>
+  </section>
+
+  <!-- ================= 币种详情 COIN ================= -->
+  <section class="view" id="view-coin">
+    <div class="stack" id="coin-root">
+      <div class="blk"><p class="progress-line">正在读取币种行情…</p></div>
     </div>
   </section>
 
@@ -1574,6 +1586,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     scans: {}, selection: null, scanRunning: false, scanPromise: null,
     scanProgress: {}, scanStartedAt: null,
     marketStarted: false,
+    coinSymbol: null, coinToken: 0,
     liq: { status: 'idle', startedAt: null, events: [], count: 0 },
   };
 
@@ -1586,7 +1599,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       VX.fetchFuturesTicker24(),
       VX.fetchPremiumIndex(),
       VX.coinGeckoMarketCaps(),
-      VX.readJson('https://api.alternative.me/fng/?limit=31&format=json', 6500),
+      VX.readJson('https://api.alternative.me/fng/?limit=31&format=json', 12000),
       VX.firstOfficialJson(
         VX.FUTURES_HOSTS.slice(0, 2).map(function (h) { return h + '/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1'; }),
         function (value) { return Array.isArray(value) && VX.recentFundingHistory(value) !== null; }, 1200),
@@ -1649,11 +1662,11 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
           btcLongShortRatio: longShort ? longShort.ratio : null,
           btcLongShortUpdatedAt: longShort ? longShort.time : null,
         };
-        var sources = ['Binance Spot official REST'];
-        if (btcFundingSource) sources.push(btcFundingSource.indexOf('CoinGecko') === 0 ? btcFundingSource : 'Binance USDⓈ-M Futures');
-        if (derivatives.btcLongShortRatio !== null) sources.push('Binance USDⓈ-M Futures · BTC account long/short ratio (1h)');
-        if (btcDominance !== null) sources.push(validDominance(cgDom) ? 'CoinGecko Global' : 'CoinPaprika Global');
-        if (fearGreedValue !== null) sources.push('Alternative.me Fear & Greed');
+        var sources = ['币安现货官方接口'];
+        if (btcFundingSource) sources.push(btcFundingSource.indexOf('CoinGecko') === 0 ? 'CoinGecko 合约聚合' : '币安 U 本位合约');
+        if (derivatives.btcLongShortRatio !== null) sources.push('币安合约账户多空比（1 小时）');
+        if (btcDominance !== null) sources.push(validDominance(cgDom) ? 'CoinGecko 全球数据' : 'CoinPaprika 全球数据');
+        if (fearGreedValue !== null) sources.push('Alternative.me 恐惧贪婪指数');
         S.overviewSources = sources.join(' + ');
         S.overview = VX.computeOverview({
           rows: rows, derivatives: derivatives, btcDominance: btcDominance,
@@ -1853,7 +1866,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       '<span class="item"><span>行情</span><b>' + statusText(S.overviewStatus) + '</b></span>' +
       '<span class="item"><span>机会</span><b>' + (S.selection ? actCount + ' 条达标' : '扫描中') + '</b></span>' +
       '<span class="item"><span>风险</span><b>' + esc(ov.risk.title) + '</b></span>' +
-      '<span class="src">' + esc(S.overviewSources) + ' · 更新 ' + fmtClock(now) + '（北京时间）</span></div>';
+      '<span class="item"><span>更新</span><b>' + fmtClock(now) + '</b></span></div>';
 
     /* 定调块 */
     var wordClass = ov.judgment === '适合做多' ? 'long' : ov.judgment === '适合做空' ? 'short' : ov.judgment === '极端风险' ? 'severe' : 'flat';
@@ -1864,7 +1877,8 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var divNote = S.selection ? VX.verdictPlanDivergenceNote(ov.judgment, plans) : null;
     if (divNote) html += '<div class="divergence-note">' + esc(divNote) + '</div>';
     html += '<details class="fold"><summary>查看判断依据</summary><div class="fold-body"><p>' + esc(ov.risk.detail) + '</p>' +
-      '<p>上涨 ' + ov.breadth.up + ' · 下跌 ' + ov.breadth.down + ' · 平盘 ' + ov.breadth.unchanged + '（币安 USDT 现货全市场样本）</p></div></details></div>';
+      '<p>上涨 ' + ov.breadth.up + ' · 下跌 ' + ov.breadth.down + ' · 平盘 ' + ov.breadth.unchanged + '（币安 USDT 现货全市场样本）</p>' +
+      '<p>数据来源：' + esc(S.overviewSources) + '（完整口径见「我的」页）。</p></div></details></div>';
 
     /* 四个独立统计块 */
     var btcA = ov.assets.find(function (a) { return a.symbol === 'BTC'; });
@@ -1872,10 +1886,10 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     function trendWord(a) { return !a ? '—' : a.change24h > 0 ? '多头' : a.change24h < 0 ? '空头' : '震荡'; }
     function trendClass(a) { return !a ? '' : a.change24h > 0 ? 'v-up' : a.change24h < 0 ? 'v-down' : ''; }
     html += '<div class="grid grid-4">' +
-      '<div class="blk stat-blk"><span class="k">市场宽度</span><span class="v">' + ov.breadth.upRatio.toFixed(1) + '%</span><span class="s">上涨 ' + ov.breadth.up + ' / ' + (ov.breadth.up + ov.breadth.down + ov.breadth.unchanged) + ' 个现货对</span></div>' +
-      '<div class="blk stat-blk"><span class="k">BTC 趋势</span><span class="v ' + trendClass(btcA) + '">' + trendWord(btcA) + '</span><span class="s">24H ' + (btcA ? fmtChange(btcA.change24h) : '数据缺失') + '</span></div>' +
-      '<div class="blk stat-blk"><span class="k">ETH 趋势</span><span class="v ' + trendClass(ethA) + '">' + trendWord(ethA) + '</span><span class="s">24H ' + (ethA ? fmtChange(ethA.change24h) : '数据缺失') + '</span></div>' +
-      '<div class="blk stat-blk"><span class="k">恐惧贪婪</span><span class="v v-accent">' + (ov.fearGreed === null ? '—' : ov.fearGreed) + '</span><span class="s">' + (ov.fearGreed === null ? '数据缺失' : esc(ov.fearGreedLabel || VX.fearGreedBand(ov.fearGreed))) + '</span></div></div>';
+      '<div class="blk stat-blk tap" onclick="window.__vxGo(\'market\')"><span class="k">市场宽度</span><span class="v">' + ov.breadth.upRatio.toFixed(1) + '%</span><span class="s">上涨 ' + ov.breadth.up + ' / ' + (ov.breadth.up + ov.breadth.down + ov.breadth.unchanged) + ' 个现货对</span></div>' +
+      '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'BTC\')"><span class="k">BTC 趋势</span><span class="v ' + trendClass(btcA) + '">' + trendWord(btcA) + '</span><span class="s">24H ' + (btcA ? fmtChange(btcA.change24h) : '数据缺失') + '</span></div>' +
+      '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'ETH\')"><span class="k">ETH 趋势</span><span class="v ' + trendClass(ethA) + '">' + trendWord(ethA) + '</span><span class="s">24H ' + (ethA ? fmtChange(ethA.change24h) : '数据缺失') + '</span></div>' +
+      '<div class="blk stat-blk tap" onclick="window.__vxGo(\'market\')"><span class="k">恐惧贪婪</span><span class="v v-accent">' + (ov.fearGreed === null ? '—' : ov.fearGreed) + '</span><span class="s">' + (ov.fearGreed === null ? '数据缺失' : esc(ov.fearGreedLabel || VX.fearGreedBand(ov.fearGreed))) + '</span></div></div>';
 
     /* 脉搏：6 个独立行情块 + 3 个独立统计块 */
     var pulseSymbols = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE'];
@@ -1883,8 +1897,8 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var bySymbol = new Map(spotRows.map(function (r) { return [r.symbol, r]; }));
     html += '<div class="grid grid-3">' + pulseSymbols.map(function (sym) {
       var r = bySymbol.get(sym + 'USDT');
-      if (!r) return '<div class="blk pulse-blk"><div class="sym"><b>' + sym + '</b></div><div class="p">—</div><div class="c" style="color:var(--weak)">行情待同步</div></div>';
-      return '<div class="blk pulse-blk"><div class="sym"><b>' + sym + '</b><span>' + fmtUsd(r.quoteVolume24h) + '</span></div>' +
+      if (!r) return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><b>' + sym + '</b></div><div class="p">—</div><div class="c" style="color:var(--weak)">行情待同步</div></div>';
+      return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><b>' + sym + '</b><span>' + fmtUsd(r.quoteVolume24h) + '</span></div>' +
         '<div class="p">' + fmtPrice(r.price) + '</div>' +
         '<div class="c ' + (r.change24h >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(r.change24h) + '</div></div>';
     }).join('') + '</div>';
@@ -1920,6 +1934,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         '<p style="margin:8px 0 0;font-size:13px;color:var(--text-secondary)">' + esc(ov.risk.detail) + '</p></div>';
     }
     root.innerHTML = html;
+    if (S.route === 'coin') updateCoinPlanSection();
   }
 
   /* ---------------- 机会页渲染 ---------------- */
@@ -1962,53 +1977,102 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   }
 
   /* ---------------- 市场页 ---------------- */
+  /* 全球指数：腾讯行情 qt.gtimg.cn（脚本标签加载，绕开跨域限制；已逐个实测可用）。
+   * 字段口径（~ 分隔）：[3] 现价 · [31] 涨跌 · [32] 涨跌% · [30] 时间。 */
   var INDEX_DEFS = [
-    ['000001.SS', '上证指数'], ['000688.SS', '科创50指数'], ['HSTECH.HK', '恒生科技指数'],
-    ['^IXIC', '纳斯达克指数'], ['^GSPC', '标普500指数'],
+    { q: 'sh000001', name: '上证指数', zone: 'Asia/Shanghai' },
+    { q: 'sh000688', name: '科创50指数', zone: 'Asia/Shanghai' },
+    { q: 'hkHSTECH', name: '恒生科技指数', zone: 'Asia/Hong_Kong' },
+    { q: 'usIXIC', name: '纳斯达克指数', zone: 'America/New_York' },
+    { q: 'usINX', name: '标普500指数', zone: 'America/New_York' },
   ];
-  function normalizeIndex(symbol, name, payload, now) {
-    var base = { id: symbol, name: name, value: null, change: null, updatedAt: null, status: '暂不可用', history: [] };
-    try {
-      var result = payload && payload.chart && payload.chart.result && payload.chart.result[0];
-      if (!result) return base;
-      var meta = result.meta || {};
-      var price = VX.finiteNumber(meta.regularMarketPrice);
-      var ts = VX.finiteNumber(meta.regularMarketTime);
-      if (meta.symbol !== symbol || meta.instrumentType !== 'INDEX' || price === null || price <= 0 || !ts || ts * 1000 > now + 60000) return base;
-      var quote = result.indicators && result.indicators.quote && result.indicators.quote[0];
-      var closes = (quote && quote.close) || [];
-      var stamps = result.timestamp || [];
-      var history = [];
-      stamps.forEach(function (t, i) {
-        var tv = VX.finiteNumber(t), cv = VX.finiteNumber(closes[i]);
-        if (tv !== null && tv > 0 && tv * 1000 <= now && cv !== null && cv > 0) history.push({ time: tv * 1000, value: cv });
-      });
-      var status = now - ts * 1000 > 4 * 86400000 ? '来源滞后' : '公开快照 · 可能延迟';
-      return { id: symbol, name: name, value: price, change: VX.finiteNumber(meta.regularMarketChangePercent), updatedAt: ts * 1000, status: status, history: history };
-    } catch (e) { return base; }
-  }
-  /* 本站价格温度模型 price-temperature-v1（market-panorama.ts 移植） */
-  function indexPriceObservation(index, now, historyLimit) {
-    var config = index.id === '000001.SS' ? { zone: 'Asia/Shanghai', close: 15 }
-      : index.id === '^GSPC' ? { zone: 'America/New_York', close: 16 } : null;
-    if (!config || !Number.isFinite(now) || index.value === null) return null;
-    var clock = new Intl.DateTimeFormat('en-US', { timeZone: config.zone, hour: 'numeric', minute: 'numeric', second: 'numeric', hourCycle: 'h23' });
-    var history = [];
-    index.history.forEach(function (point) {
-      if (!Number.isFinite(point.time) || !Number.isFinite(point.value) || point.value <= 0) return;
-      var parts = clock.formatToParts(point.time);
-      function part(nm) { var f = parts.find(function (p) { return p.type === nm; }); return f ? Number(f.value) : 0; }
-      var close = point.time + (config.close - part('hour')) * 3600000 - part('minute') * 60000 - part('second') * 1000;
-      if (Number.isFinite(close) && close <= now && close >= point.time) history.push({ time: close, value: point.value });
+  function loadScriptTag(src, charset, timeoutMs) {
+    return new Promise(function (resolve) {
+      var s = document.createElement('script');
+      if (charset) s.charset = charset;
+      s.src = src;
+      var done = false;
+      var timer = setTimeout(finish, timeoutMs || 9000);
+      function finish() {
+        if (done) return;
+        done = true; clearTimeout(timer);
+        try { s.remove(); } catch (e) { /* 已移除 */ }
+        resolve();
+      }
+      s.onload = finish; s.onerror = finish;
+      document.head.appendChild(s);
     });
-    if (history.length < 2) return null;
-    for (var i = 1; i < history.length; i++) if (history[i].time <= history[i - 1].time) return null;
-    return { history: history.slice(-(historyLimit || 30)) };
   }
-  function indexTemperature(index, now) {
-    var observedFull = indexPriceObservation(index, now, Infinity);
-    if (!observedFull || observedFull.history.length < 60) return null;
-    var all = observedFull.history, series = [];
+  function wallToUtcMs(y, mo, d, h, mi, sec, zone) {
+    var guess = Date.UTC(y, mo - 1, d, h, mi, sec);
+    try {
+      var parts = {};
+      new Intl.DateTimeFormat('en-US', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })
+        .formatToParts(new Date(guess)).forEach(function (p) { parts[p.type] = p.value; });
+      var asUtc = Date.UTC(+parts.year, +parts.month - 1, +parts.day, (+parts.hour) % 24, +parts.minute, +parts.second);
+      return guess - (asUtc - guess);
+    } catch (e) { return guess; }
+  }
+  function parseTencentStamp(raw, zone) {
+    var digits = String(raw || '').replace(/\D/g, '');
+    if (digits.length < 14) return null;
+    return wallToUtcMs(+digits.slice(0, 4), +digits.slice(4, 6), +digits.slice(6, 8),
+      +digits.slice(8, 10), +digits.slice(10, 12), +digits.slice(12, 14), zone);
+  }
+  function tencentQuotes(symbols) {
+    function parse() {
+      var out = {};
+      symbols.forEach(function (q) {
+        var v = window['v_' + q];
+        if (typeof v === 'string' && v.length) out[q] = v.split('~');
+      });
+      return out;
+    }
+    var url = 'https://qt.gtimg.cn/q=' + symbols.join(',');
+    return loadScriptTag(url, 'gbk', 9000).then(function () {
+      var out = parse();
+      if (Object.keys(out).length) return out;
+      return loadScriptTag(url, 'gbk', 9000).then(parse);
+    });
+  }
+  function parseTencentQuote(def, fields) {
+    var price = VX.finiteNumber(fields[3]);
+    if (price === null || price <= 0) return null;
+    var updatedAt = parseTencentStamp(fields[30], def.zone);
+    var now = Date.now();
+    if (updatedAt === null || updatedAt > now + 3600000) updatedAt = null;
+    var status = updatedAt !== null && now - updatedAt > 4 * 86400000 ? '来源滞后' : '腾讯行情 · 可能延迟';
+    return { id: def.q, name: def.name, value: price, change: VX.finiteNumber(fields[32]), updatedAt: updatedAt, status: status };
+  }
+  function tencentDailyCloses(q, isUs) {
+    function once(suffix) {
+      var varName = 'vxkline_' + q + suffix;
+      var url = isUs
+        ? 'https://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?_var=' + varName + '&param=' + q + ',day,,,400,qfq'
+        : 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=' + varName + '&param=' + q + ',day,,,400,';
+      return loadScriptTag(url, null, 12000).then(function () {
+        var obj = window[varName];
+        try { delete window[varName]; } catch (e) { /* 忽略 */ }
+        try {
+          var node = obj && obj.data && obj.data[q];
+          var rows = node && (node.day || node.qfqday || node.usday);
+          if (!Array.isArray(rows)) return null;
+          var hist = rows.map(function (r) {
+            return { time: Date.parse(String(r[0]) + 'T00:00:00Z'), value: VX.finiteNumber(r[2]) };
+          }).filter(function (p) { return Number.isFinite(p.time) && p.value !== null && p.value > 0; });
+          hist.sort(function (a, b) { return a.time - b.time; });
+          return hist.length >= 60 ? hist : null;
+        } catch (e) { return null; }
+      });
+    }
+    /* 该源偶发 501/超时，失败重试一次（只重试传输，不改口径） */
+    return once('').then(function (h) { return h || once('_r'); });
+  }
+  /* 本站价格温度模型 price-temperature-v1（market-panorama.ts 移植）：
+   * 输入为指数日线已收盘序列（腾讯日线），每根即一个已收盘日，直接进入窗口计算。 */
+  function temperatureFromHistory(all) {
+    if (!all || all.length < 60) return null;
+    var series = [];
     for (var i = 59; i < all.length; i++) {
       var prices = all.slice(i - 59, i + 1).map(function (p) { return p.value; });
       var moves = prices.slice(1).map(function (p, n) { return p - prices[n]; });
@@ -2029,7 +2093,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     S.marketStarted = true;
     var root = document.getElementById('market-root');
     root.innerHTML =
-      '<div class="zhead" style="margin-top:2px"><h2>全球指数</h2><span class="en">Global Indices</span><span class="right">Yahoo Finance · 可能延迟</span></div>' +
+      '<div class="zhead" style="margin-top:2px"><h2>全球指数</h2><span class="en">Global Indices</span><span class="right">腾讯行情 · 可能延迟</span></div>' +
       '<div class="grid grid-2" id="mkt-indices"></div>' +
       '<div class="zhead"><h2>市场情绪</h2><span class="en">Sentiment</span><span class="right">近30日</span></div>' +
       '<div class="grid grid-3" id="mkt-sentiment"></div>' +
@@ -2040,17 +2104,14 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       '<div class="grid grid-4" id="mkt-liq"></div>' +
       '<div id="mkt-liq-note"></div>';
 
-    /* BTC + 指数 */
+    /* BTC（币安） + 全球指数（腾讯）：取不到的指数不渲染，不留「暂不可用」块 */
     var idxBox = document.getElementById('mkt-indices');
     function idxTile(m, unit) {
-      if (!m || m.value === null) {
-        return '<div class="blk idx-blk"><div class="nm">' + esc(m ? m.name : '') + '</div><div class="vl">—</div>' +
-          '<span class="st">暂不可用 · Yahoo Finance 未开放浏览器跨域读取，静态版无法直连（服务端版由服务器代取）</span></div>';
-      }
       return '<div class="blk idx-blk"><div class="nm">' + esc(m.name) + '</div><div class="vl">' + fmtPrice(m.value) + (unit ? ' <small style="font-size:11px;color:var(--muted)">' + unit + '</small>' : '') + '</div>' +
-        '<div class="ch ' + (m.change >= 0 ? 'v-up' : 'v-down') + '">' + (m.change === null ? '—' : fmtChange(m.change)) + '</div>' +
-        '<span class="st">' + esc(m.status) + ' · ' + fmtTime(m.updatedAt) + '</span></div>';
+        '<div class="ch ' + (m.change !== null && m.change >= 0 ? 'v-up' : 'v-down') + '">' + (m.change === null ? '—' : fmtChange(m.change)) + '</div>' +
+        '<span class="st">' + esc(m.status) + (m.updatedAt ? ' · ' + fmtTime(m.updatedAt) : '') + '</span></div>';
     }
+    idxBox.innerHTML = '<div class="blk idx-blk" id="idx-btc"><div class="nm">BTC</div><div class="vl">…</div><span class="st">读取中</span></div>';
     VX.firstOfficialJson(VX.SPOT_HOSTS.map(function (h) { return h + '/api/v3/ticker/24hr?symbol=BTCUSDT'; }),
       function (v) { return v && v.symbol === 'BTCUSDT'; }, 4000).then(function (res) {
         var now = Date.now();
@@ -2066,53 +2127,49 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
               '<div class="ch ' + (change >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(change) + '</div><span class="st">24H · 已核验 · Binance 现货</span></div>'
             : '<div class="blk idx-blk"><div class="nm">BTC</div><div class="vl">—</div><span class="st">暂不可用 · Binance 现货</span></div>';
         }
-        idxBox.innerHTML = btcTile + INDEX_DEFS.map(function (d) {
-          return '<div class="blk idx-blk" id="idx-' + d[0].replace(/[^A-Z0-9]/gi, '') + '"><div class="nm">' + esc(d[1]) + '</div><div class="vl">…</div><span class="st">读取中</span></div>';
-        }).join('');
-        return Promise.all(INDEX_DEFS.map(function (d) {
-          var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(d[0]) + '?interval=1d&range=6mo';
-          var controller = new AbortController();
-          var timer = setTimeout(function () { controller.abort(); }, 6500);
-          return fetch(url, { cache: 'no-store', headers: { Accept: 'application/json' }, signal: controller.signal })
-            .then(function (resp) { clearTimeout(timer); return resp.ok ? resp.json() : null; })
-            .catch(function () { clearTimeout(timer); return null; })
-            .then(function (payload) {
-              var metric = normalizeIndex(d[0], d[1], payload, Date.now());
-              var el = document.getElementById('idx-' + d[0].replace(/[^A-Z0-9]/gi, ''));
-              if (el) el.outerHTML = idxTile(metric, '点');
-              return metric;
-            });
-        }));
-      }).then(function (metrics) {
-        if (metrics) renderSentiment(metrics);
+        var slot = document.getElementById('idx-btc');
+        if (slot) {
+          var tmp = document.createElement('div');
+          tmp.innerHTML = btcTile;
+          if (tmp.firstChild) slot.replaceWith(tmp.firstChild);
+        }
       });
+    tencentQuotes(INDEX_DEFS.map(function (d) { return d.q; })).then(function (quotes) {
+      var tiles = '';
+      INDEX_DEFS.forEach(function (d) {
+        var m = quotes[d.q] ? parseTencentQuote(d, quotes[d.q]) : null;
+        if (m) tiles += idxTile(m, '点');
+      });
+      if (tiles) idxBox.insertAdjacentHTML('beforeend', tiles);
+    });
 
-    /* 情绪：加密来自 Alternative.me；A/美股温度依赖指数历史 */
-    function renderSentiment(metrics) {
+    /* 情绪：加密来自 Alternative.me；A/美股温度用腾讯日线收盘在本页计算。
+     * 温度算不出来（源失败/历史不足）就不渲染该块，不留借口块。 */
+    function tempTileHtml(label, temp) {
+      return '<div class="blk sent-blk"><div class="nm">' + label + '</div><div class="vl">' + temp.value + '<small>' + VX.temperatureBand(temp.value) + '</small></div>' +
+        sparkline(temp.history) + '<span class="st" style="font-size:11px;color:var(--weak)">本站价格温度 · 已收盘 · ' + fmtTime(temp.updatedAt) + '</span></div>';
+    }
+    function renderSentiment() {
       var box = document.getElementById('mkt-sentiment');
       if (!box) return;
       var now = Date.now();
       var fng = VX.normalizeFearGreed(S.fng, now);
-      var cryptoTile = fng.value === null
-        ? '<div class="blk sent-blk"><div class="nm">加密市场</div><div class="vl">—</div><span class="st" style="font-size:11px;color:var(--weak)">暂不可用 · Alternative.me</span></div>'
-        : '<div class="blk sent-blk"><div class="nm">加密市场</div><div class="vl">' + fng.value + '<small>' + VX.fearGreedBand(fng.value) + '</small></div>' +
+      var html = '';
+      if (fng.value !== null) {
+        html += '<div class="blk sent-blk"><div class="nm">加密市场</div><div class="vl">' + fng.value + '<small>' + VX.fearGreedBand(fng.value) + '</small></div>' +
           sparkline(fng.history) + '<span class="st" style="font-size:11px;color:var(--weak)">' + esc(fng.status) + ' · Alternative.me · ' + fmtTime(fng.updatedAt) + '</span></div>';
-      function tempTile(label, metric) {
-        var temp = metric && metric.value !== null ? indexTemperature(metric, now) : null;
-        if (!temp) {
-          return '<div class="blk sent-blk"><div class="nm">' + label + '</div><div class="vl">—</div>' +
-            '<span class="st" style="font-size:11px;color:var(--weak)">暂不可用 · 本站价格温度模型需要指数收盘历史，数据源未开放浏览器直连；未核验前不生成分数</span></div>';
-        }
-        return '<div class="blk sent-blk"><div class="nm">' + label + '</div><div class="vl">' + temp.value + '<small>' + VX.temperatureBand(temp.value) + '</small></div>' +
-          sparkline(temp.history) + '<span class="st" style="font-size:11px;color:var(--weak)">本站价格温度 · 已收盘 · ' + fmtTime(temp.updatedAt) + '</span></div>';
       }
-      var shMetric = metrics ? metrics[0] : null;
-      var spMetric = metrics ? metrics[4] : null;
-      box.innerHTML = cryptoTile + tempTile('A 股市场', shMetric) + tempTile('美股市场', spMetric);
+      box.innerHTML = html;
+      Promise.all([tencentDailyCloses('sh000001', false), tencentDailyCloses('usINX', true)]).then(function (r) {
+        var extra = '';
+        var tA = r[0] ? temperatureFromHistory(r[0]) : null;
+        var tU = r[1] ? temperatureFromHistory(r[1]) : null;
+        if (tA) extra += tempTileHtml('A 股市场', tA);
+        if (tU) extra += tempTileHtml('美股市场', tU);
+        if (extra && document.getElementById('mkt-sentiment') === box) box.insertAdjacentHTML('beforeend', extra);
+      });
     }
-    loadCore().then(function () {
-      if (!document.getElementById('mkt-sentiment').innerHTML) renderSentiment(null);
-    });
+    loadCore().then(function () { renderSentiment(); });
 
     /* 周期估值：1490 根 BTC 已收盘日线 */
     var valBox = document.getElementById('mkt-valuation');
@@ -2135,8 +2192,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
           valBox.innerHTML =
             valTile('BTC 4年平均价格', null, 'USDT', '暂不可用 · 需要 1490 根连续已收盘日线，当前数据未通过完整性核验', '最近 1460 根完整 UTC 日线收盘价的算术平均。') +
             valTile('200日定投成本', null, 'USDT', '暂不可用 · 同上', '每天投入等额 USDT：200 ÷ Σ(1/每日收盘价)。不含手续费；不是 AHR999。') +
-            valTile('AHR999', null, '', '暂不可用 · 同上', 'AHR=(收盘价/200日几何均价)×(收盘价/币龄拟合价)；固定参数复算，不保证与其他网站相同，不是收益预测或买入指令。') +
-            valTile('MVRV-Z', null, '', '暂不可用 · 链上已实现市值来源未接入', '需要市值、已实现市值及历史标准差。尚无已授权且可核验的数据源；不从价格曲线猜测。');
+            valTile('AHR999', null, '', '暂不可用 · 同上', 'AHR=(收盘价/200日几何均价)×(收盘价/币龄拟合价)；固定参数复算，不保证与其他网站相同，不是收益预测或买入指令。');
           return;
         }
         var lastMean = cycle.mean[cycle.mean.length - 1];
@@ -2145,8 +2201,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         valBox.innerHTML =
           valTile('BTC 4年平均价格', fmtPrice(lastMean.value), 'USDT', '已收盘日线 · ' + fmtTime(lastMean.time), '最近 1460 根完整 UTC 日线收盘价的算术平均；4×365 日，不按闰年调整。') +
           valTile('200日定投成本', fmtPrice(lastDca.value), 'USDT', '已收盘日线 · ' + fmtTime(lastDca.time), '每天投入等额 USDT：200 ÷ Σ(1/每日收盘价)。不含手续费；不是 AHR999，也不是 Strategy 持仓成本。') +
-          valTile('AHR999（几何均值复算）', lastAhr.value.toFixed(3), '', '已收盘日线 · ' + fmtTime(lastAhr.time), 'AHR=(收盘价/200日几何均价)×(收盘价/币龄拟合价)；拟合价=10^(5.84×log10(自 2009-01-03 的 UTC 日龄)−17.01)。固定参数复算，不保证与其他网站相同，不是收益预测或买入指令。') +
-          valTile('MVRV-Z', null, '', '暂不可用 · 链上已实现市值来源未接入', '需要市值、已实现市值及历史标准差。尚无已授权且可核验的数据源；不从价格曲线猜测。');
+          valTile('AHR999（几何均值复算）', lastAhr.value.toFixed(3), '', '已收盘日线 · ' + fmtTime(lastAhr.time), 'AHR=(收盘价/200日几何均价)×(收盘价/币龄拟合价)；拟合价=10^(5.84×log10(自 2009-01-03 的 UTC 日龄)−17.01)。固定参数复算，不保证与其他网站相同，不是收益预测或买入指令。');
       });
     })();
 
@@ -2277,13 +2332,229 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     }).join('');
   }
 
+  /* ---------------- 币种详情 ---------------- */
+  function fmtCompact(v) {
+    if (v === null || v === undefined || !Number.isFinite(v)) return '—';
+    if (v >= 1e9) return (v / 1e9).toFixed(2) + 'B';
+    if (v >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+    if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+    return v.toFixed(2);
+  }
+  function coinPlansFor(symbol) {
+    var found = [], seen = {};
+    function take(list) {
+      (list || []).forEach(function (p) {
+        if (p && p.symbol === symbol) {
+          var k = p.horizon + '|' + p.market;
+          if (!seen[k]) { seen[k] = 1; found.push(p); }
+        }
+      });
+    }
+    if (S.selection) take(S.selection.plans);
+    ['1d', '12h'].forEach(function (h) { if (S.scans[h]) take(S.scans[h].data); });
+    ['1d', '12h'].forEach(function (h) { if (S.scans[h]) take(S.scans[h].allPlans); });
+    return found;
+  }
+  function coinPlanSectionHtml(symbol) {
+    var plans = coinPlansFor(symbol);
+    var html = '<div class="zhead"><h2>本轮扫描评估</h2><span class="en">Scan</span></div>';
+    if (plans.length) {
+      html += plans.map(function (p) { return planCard(p, Date.now()); }).join('');
+    } else if (!S.selection) {
+      html += '<div class="blk"><p class="progress-line">本轮扫描尚未完成，完成后这里显示 ' + esc(symbol) + ' 的评估结果（评分与被拦原因）。</p>' +
+        '<p style="margin-top:10px"><button class="refresh-btn" onclick="window.__vxGo(\'signals\')">去机会页看扫描进度</button></p></div>';
+    } else {
+      var diag = S.scans['1d'] && S.scans['1d'].diagnostics;
+      html += '<div class="blk empty-blk"><div class="big">本轮扫描未对 ' + esc(symbol) + ' 生成计划</div>' +
+        '<p>扫描池为市值 / 成交额前 50' + (diag ? '，本轮共检查 ' + (diag.checked || 0) + ' 个标的' : '') + '。未入池、缺少可核验 K 线，或已收盘 K 线未形成方向性结构的币种不生成计划，也不展示评分——没有就不硬凑。</p></div>';
+    }
+    return html;
+  }
+  function updateCoinPlanSection() {
+    var box = document.getElementById('coin-plans');
+    if (box && S.coinSymbol) box.innerHTML = coinPlanSectionHtml(S.coinSymbol);
+  }
+  function fetchCoinJson(hosts, path, validate, timeout) {
+    return VX.firstOfficialJson(hosts.map(function (h) { return h + path; }), validate, timeout || 5000);
+  }
+  function fetchCoinLongShort(pair) {
+    var path = '/futures/data/globalLongShortAccountRatio?symbol=' + pair + '&period=1h&limit=1';
+    var hosts = VX.FUTURES_HOSTS, index = 0;
+    function next() {
+      if (index >= hosts.length) return Promise.resolve(null);
+      return VX.readJson(hosts[index++] + path, 8000).then(function (rows) {
+        var list = VX.jsonList(rows);
+        if (list.length === 1) {
+          var row = VX.jsonRecord(list[0]);
+          var ratio = VX.finiteNumber(row && row.longShortRatio);
+          var time = VX.finiteNumber(row && row.timestamp);
+          var now = Date.now();
+          if (row && row.symbol === pair && ratio !== null && ratio >= 0 && time !== null && time > 0 && time <= now + 5000 && now - time < 7260000) return { ratio: ratio, time: time };
+        }
+        return next();
+      });
+    }
+    return next();
+  }
+  function aggregate4h(rows) {
+    var byBucket = new Map();
+    rows.forEach(function (r) {
+      var t = Number(r[0]), o = Number(r[1]), h = Number(r[2]), l = Number(r[3]), c = Number(r[4]);
+      if (![t, o, h, l, c].every(Number.isFinite)) return;
+      var bucket = Math.floor(t / 14400000) * 14400000;
+      var cur = byBucket.get(bucket);
+      if (!cur) byBucket.set(bucket, { t: bucket, o: o, h: h, l: l, c: c });
+      else { cur.h = Math.max(cur.h, h); cur.l = Math.min(cur.l, l); cur.c = c; }
+    });
+    return Array.from(byBucket.values()).sort(function (a, b) { return a.t - b.t; });
+  }
+  function drawCoinChart(canvas, candles) {
+    if (!candles.length) return;
+    var dpr = window.devicePixelRatio || 1;
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    var min = Infinity, max = -Infinity;
+    candles.forEach(function (c) { if (c.l < min) min = c.l; if (c.h > max) max = c.h; });
+    var span = max - min || 1;
+    min -= span * 0.06; max += span * 0.06; span = max - min;
+    var padL = 2, padR = 2, padT = 6, padB = 6;
+    var iw = w - padL - padR, ih = h - padT - padB;
+    function Y(v) { return padT + (max - v) / span * ih; }
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    [0.25, 0.5, 0.75].forEach(function (f) {
+      var y = Math.round(padT + ih * f) + 0.5;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+    });
+    var step = iw / candles.length;
+    var bw = Math.max(1, Math.floor(step * 0.62));
+    candles.forEach(function (c, i) {
+      var x = padL + step * i + (step - bw) / 2;
+      var color = c.c >= c.o ? '#2bea79' : '#ff3761';
+      ctx.strokeStyle = color; ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x + bw / 2, Y(c.h));
+      ctx.lineTo(x + bw / 2, Y(c.l));
+      ctx.stroke();
+      var yO = Y(c.o), yC = Y(c.c);
+      ctx.fillRect(x, Math.min(yO, yC), bw, Math.max(1, Math.abs(yC - yO)));
+    });
+  }
+  function openCoin(symbol) {
+    symbol = String(symbol || 'BTC').toUpperCase().replace(/[^A-Z0-9]/g, '') || 'BTC';
+    S.coinSymbol = symbol;
+    var token = ++S.coinToken;
+    var root = document.getElementById('coin-root');
+    if (!root) return;
+    var pair = symbol + 'USDT';
+    root.innerHTML =
+      '<div class="coin-top"><button class="refresh-btn" onclick="window.__vxGo(\'today\')">← 返回今日</button>' +
+      '<span class="coin-title">' + esc(symbol) + '<small>' + esc(pair) + ' · 币安公开行情</small></span></div>' +
+      '<div class="blk"><p class="progress-line">正在读取 ' + esc(symbol) + ' 实时行情（现货 24H · 小时 K 线 · 合约数据）…</p></div>' +
+      '<div id="coin-plans">' + coinPlanSectionHtml(symbol) + '</div>';
+    Promise.all([
+      fetchCoinJson(VX.SPOT_HOSTS, '/api/v3/ticker/24hr?symbol=' + pair, function (v) { return v && v.symbol === pair; }, 7000),
+      fetchCoinJson(VX.SPOT_HOSTS, '/api/v3/klines?symbol=' + pair + '&interval=1h&limit=168', function (v) { return Array.isArray(v) && v.length >= 25; }, 8000),
+      fetchCoinJson(VX.FUTURES_HOSTS, '/fapi/v1/premiumIndex?symbol=' + pair, function (v) { return v && v.symbol === pair; }, 9000),
+      fetchCoinJson(VX.FUTURES_HOSTS, '/fapi/v1/openInterest?symbol=' + pair, function (v) { return v && v.symbol === pair; }, 9000),
+      fetchCoinLongShort(pair),
+    ]).then(function (r) {
+      if (token !== S.coinToken || S.route !== 'coin' || S.coinSymbol !== symbol) return;
+      renderCoinDetail(symbol, { ticker: r[0], klines: r[1], premium: r[2], oi: r[3], ls: r[4] });
+    });
+  }
+  function renderCoinDetail(symbol, d) {
+    var root = document.getElementById('coin-root');
+    if (!root) return;
+    var now = Date.now();
+    var pair = symbol + 'USDT';
+    var html = '<div class="coin-top"><button class="refresh-btn" onclick="window.__vxGo(\'today\')">← 返回今日</button>' +
+      '<span class="coin-title">' + esc(symbol) + '<small>' + esc(pair) + ' · 币安公开行情</small></span></div>';
+    var t = d.ticker && d.ticker.payload;
+    if (t) {
+      var price = VX.finiteNumber(t.lastPrice), chg = VX.finiteNumber(t.priceChangePercent);
+      var closeMs = VX.finiteNumber(t.closeTime);
+      html += '<div class="blk"><div class="zlabel"><span>现价 · 现货 24H</span><span style="margin-left:auto">' + (closeMs ? fmtTime(closeMs) : '') + '</span></div>' +
+        '<div class="coin-price-row"><span class="coin-price">' + fmtPrice(price) + '</span>' +
+        '<span class="coin-chg ' + (chg !== null && chg >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(chg) + '</span></div>' +
+        '<div class="price-grid">' +
+        '<div class="cell"><span>24H 最高</span><b>' + fmtPrice(VX.finiteNumber(t.highPrice)) + '</b></div>' +
+        '<div class="cell"><span>24H 最低</span><b>' + fmtPrice(VX.finiteNumber(t.lowPrice)) + '</b></div>' +
+        '<div class="cell"><span>24H 成交额</span><b>' + fmtUsd(VX.finiteNumber(t.quoteVolume)) + '</b></div>' +
+        '<div class="cell"><span>24H 成交量</span><b>' + fmtCompact(VX.finiteNumber(t.volume)) + ' ' + esc(symbol) + '</b></div></div></div>';
+    } else {
+      html += '<div class="blk empty-blk"><div class="big">现货行情暂不可用</div><p>币安现货 24H 行情本次未取回，下方合约数据与扫描评估不受影响。</p></div>';
+    }
+    var rows = d.klines && d.klines.payload;
+    if (Array.isArray(rows) && rows.length >= 25) {
+      var closes = rows.map(function (r) { return Number(r[4]); });
+      var lastClose = closes[closes.length - 1];
+      function chgBack(n) {
+        var ref = closes[closes.length - 1 - n];
+        return Number.isFinite(ref) && ref > 0 ? (lastClose / ref - 1) * 100 : null;
+      }
+      function winCell(label, v) {
+        return '<div class="blk stat-blk"><span class="k">' + label + '</span><span class="v ' + (v === null ? '' : v >= 0 ? 'v-up' : 'v-down') + '">' + (v === null ? '—' : fmtChange(v)) + '</span></div>';
+      }
+      html += '<div class="grid grid-4">' + winCell('近 1 小时', chgBack(1)) + winCell('近 4 小时', chgBack(4)) +
+        winCell('近 24 小时', chgBack(24)) + winCell('近 7 天', closes[0] > 0 ? (lastClose / closes[0] - 1) * 100 : null) + '</div>';
+      html += '<div class="blk"><div class="zlabel"><span>近 7 天走势 · 4 小时 K 线</span><span style="margin-left:auto">现货小时线聚合</span></div>' +
+        '<canvas class="chart-canvas" id="coin-chart"></canvas></div>';
+    } else {
+      html += '<div class="blk empty-blk"><div class="big">走势数据暂不可用</div><p>小时 K 线本次未取回，多窗口涨跌与走势图无法计算。</p></div>';
+    }
+    var pm = d.premium && d.premium.payload;
+    if (pm) {
+      var mark = VX.finiteNumber(pm.markPrice), fund = VX.finiteNumber(pm.lastFundingRate);
+      var oiVal = d.oi && d.oi.payload ? VX.finiteNumber(d.oi.payload.openInterest) : null;
+      html += '<div class="zhead"><h2>合约数据</h2><span class="en">Futures</span><span class="right">USDT 永续</span></div>' +
+        '<div class="grid grid-4">' +
+        '<div class="blk stat-blk"><span class="k">标记价格</span><span class="v">' + fmtPrice(mark) + '</span></div>' +
+        '<div class="blk stat-blk"><span class="k">资金费率</span><span class="v">' + (fund === null ? '—' : (fund * 100).toFixed(4) + '%') + '</span><span class="s">按期结算</span></div>' +
+        '<div class="blk stat-blk"><span class="k">未平仓量</span><span class="v">' + (oiVal === null ? '—' : fmtCompact(oiVal)) + '</span><span class="s">' + (oiVal !== null && mark !== null ? '约 ' + fmtUsd(oiVal * mark) : '数据缺失') + '</span></div>' +
+        '<div class="blk stat-blk"><span class="k">多空比 · 账户</span><span class="v">' + (d.ls ? d.ls.ratio.toFixed(2) : '—') + '</span><span class="s">' + (d.ls ? '1 小时口径 · ' + fmtTime(d.ls.time) : '数据缺失') + '</span></div></div>';
+    } else {
+      html += '<div class="zhead"><h2>合约数据</h2><span class="en">Futures</span></div>' +
+        '<div class="blk empty-blk"><p>该币种暂无可核验的 USDT 永续合约数据（无永续合约，或合约接口本次未取回）。</p></div>';
+    }
+    html += '<div id="coin-plans">' + coinPlanSectionHtml(symbol) + '</div>';
+    html += '<p class="foot-note">现货与合约数据由浏览器直连币安公开接口 · 抓取 ' + fmtClock(now) + '（北京时间）· 评分与完整度不是胜率。</p>';
+    root.innerHTML = html;
+    if (Array.isArray(rows) && rows.length >= 25) {
+      var candles = aggregate4h(rows);
+      requestAnimationFrame(function () {
+        var canvas = document.getElementById('coin-chart');
+        if (canvas && S.route === 'coin' && S.coinSymbol === symbol) drawCoinChart(canvas, candles);
+      });
+    }
+  }
+  window.__vxCoin = function (sym) {
+    var target = '#/coin/' + sym;
+    if (location.hash === target) applyRoute('coin', sym);
+    else location.hash = target;
+  };
+  window.__vxGo = function (route) {
+    if (location.hash === '#/' + route) applyRoute(route);
+    else location.hash = '#/' + route;
+  };
+
   /* ---------------- 路由 ---------------- */
   var ROUTES = ['today', 'voices', 'signals', 'market', 'me'];
-  function applyRoute(route) {
-    if (ROUTES.indexOf(route) < 0) route = 'today';
+  function parseHash() {
+    var parts = location.hash.replace(/^#\/?/, '').split('/');
+    if (parts[0] === 'coin' && parts[1]) return { route: 'coin', symbol: parts[1].toUpperCase() };
+    return { route: ROUTES.indexOf(parts[0]) >= 0 ? parts[0] : 'today', symbol: null };
+  }
+  function applyRoute(route, symbol) {
+    if (route !== 'coin' && ROUTES.indexOf(route) < 0) route = 'today';
     S.route = route;
     document.querySelectorAll('.view').forEach(function (v) { v.classList.toggle('active', v.id === 'view-' + route); });
-    document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.toggle('active', n.getAttribute('data-route') === route); });
+    var navRoute = route === 'coin' ? 'today' : route;
+    document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.toggle('active', n.getAttribute('data-route') === navRoute); });
     window.scrollTo(0, 0);
     if (route === 'today' || route === 'signals') {
       loadCore().then(function () { renderToday(); });
@@ -2292,6 +2563,10 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       startMarket();
     } else if (route === 'voices') {
       renderVoices();
+    } else if (route === 'coin') {
+      loadCore().then(function () { renderToday(); });
+      ensureScan();
+      openCoin(symbol || 'BTC');
     }
   }
   document.querySelectorAll('.nav-item').forEach(function (n) {
@@ -2302,7 +2577,8 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     });
   });
   window.addEventListener('hashchange', function () {
-    applyRoute(location.hash.replace('#/', '') || 'today');
+    var p = parseHash();
+    applyRoute(p.route, p.symbol);
   });
   var signalsRunBtn = document.getElementById('signals-run');
   if (signalsRunBtn) signalsRunBtn.addEventListener('click', function () { ensureScan(); });
@@ -2328,7 +2604,8 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     if (S.route === 'market' && S.liq.status === 'open') renderLiq();
   }, 15000);
 
-  applyRoute(location.hash.replace('#/', '') || 'today');
+  var initialRoute = parseHash();
+  applyRoute(initialRoute.route, initialRoute.symbol);
 })();
 
 </script>
