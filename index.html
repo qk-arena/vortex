@@ -177,8 +177,20 @@ details.fold .fold-body p { margin: 4px 0; }
 .ai-card .ai-title { font-size: 16px; font-weight: 700; margin-top: 6px; }
 .ai-card .ai-basis { font-size: 12.5px; color: var(--text-secondary); margin: 4px 0 0; }
 
-/* ---------- 机会卡 ---------- */
-.plan-card { display: block; }
+/* ---------- 机会瓷砖（横排 3 个的紧凑摘要，点开进详情） ---------- */
+.coin-logo.tile { width: 26px; height: 26px; }
+.coin-logo.tile i { font-size: 11px; }
+.plan-tile { padding: 10px; }
+.tile-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.tile-sym { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile-score { display: flex; align-items: baseline; gap: 5px; margin-top: 9px; }
+.tile-score b { font-size: 20px; line-height: 1; }
+.tile-score small { font-size: 9.5px; color: var(--weak); }
+.tile-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.tile-tags .badge, .tile-tags .pill { font-size: 10px; padding: 1px 6px; }
+.tile-horizon { font-size: 10px; color: var(--weak); align-self: center; letter-spacing: .03em; }
+.tile-price { font-size: 14px; font-weight: 700; margin-top: 9px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile-chg { font-size: 12px; font-weight: 700; margin-top: 1px; }
 .plan-top { display: flex; align-items: flex-start; gap: 10px; }
 .plan-id { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .plan-logo {
@@ -1972,32 +1984,31 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   function actionableCount(plans, now) {
     return plans.filter(function (p) { return VX.opportunityView(p, now).actionable; }).length;
   }
-  /* 机会卡 = 紧凑摘要块：一币一卡、独立成块；点开进详情页看完整信息。
+  /* 机会瓷砖 = 横排 3 个的紧凑摘要：一币一砖，只带 logo/代码、方向标签、状态标签
+   * （不可执行时标「仅观察」）、周期小标（1D/12H）、执行证据分与现价/24h 涨跌；可执行砖的分数用强调色，
+   * 与仅观察砖一眼可分。被拦原因、完整度、有效期与五问明细全在详情页，点砖进入。
    * 注册表按内容键（币种|周期|收盘时间）存计划对象，详情路由据此找回。 */
   var planByKey = {};
   function planKey(plan) { return plan.symbol + '|' + plan.horizon + '|' + (plan.closedAt || ''); }
   function planProduct(plan) { return plan.market === 'futures' ? '币安 U 本位永续合约' : '币安现货'; }
   function planHorizonLabel(plan) { return plan.horizon === '1d' ? '日线 1D' : plan.horizon === '12h' ? '12 小时 12H' : String(plan.horizon).toUpperCase(); }
-  function planCard(plan, now) {
+  /* 砖上的周期小标：今日合并列表里同一币的日线/12 小时计划并排出现，靠它区分。 */
+  function horizonTag(plan) { return plan.horizon === '1d' ? '1D' : plan.horizon === '12h' ? '12H' : String(plan.horizon || '').toUpperCase(); }
+  function planTile(plan, now) {
     var view = VX.opportunityView(plan, now);
     var actionable = view.actionable;
     var dirClass = plan.direction === '做多' ? 'long' : plan.direction === '做空' ? 'short' : 'flat';
     var key = planKey(plan);
     planByKey[key] = plan;
-    var html = '<article class="blk plan-card tap" onclick="window.__vxPlan(\'' + esc(key) + '\')">';
-    html += '<div class="plan-top"><div class="plan-id">' + coinLogoHtml(plan.symbol, 'plan') +
-      '<div class="plan-name">' + esc(plan.symbol) + '<small>' + esc(planProduct(plan)) + ' · ' + esc(planHorizonLabel(plan)) + '</small></div></div>' +
-      '<div class="plan-score"><b>' + plan.score + '</b><small>执行证据分</small></div></div>';
-    html += '<div class="tag-row"><span class="badge ' + dirClass + '">' + esc(plan.direction) + '</span>' +
-      '<span class="pill ' + (actionable ? 'ok' : 'warn') + '">' + (actionable ? '本轮规则通过' : '仅观察 · 不入场') + '</span>' +
-      '<span class="tag-note">评分非胜率</span></div>';
-    if (!actionable) {
-      html += '<p class="wait-line">' + esc(view.label) + '</p>';
-    } else {
-      html += '<div class="round-prices">入场区 <b>' + fmtPrice(plan.entryLow) + ' – ' + fmtPrice(plan.entryHigh) + '</b> · 止损 <b>' + fmtPrice(plan.stopLoss) + '</b></div>';
-    }
-    html += '<div class="round-prices">现价 <b>' + fmtPrice(plan.price) + '</b>（' + fmtChange(plan.change24h) + '） · 数据完整度 <b>' + plan.confidence + '%</b> · 有效期至 ' + fmtTime(Date.parse(plan.validUntil)) + '</div>';
-    html += '<p class="plan-meta">点开查看完整信息：五问明细、全部依据、风控与未来走势展望</p>';
+    var chgCls = Number.isFinite(plan.change24h) ? (plan.change24h >= 0 ? 'v-up' : 'v-down') : '';
+    var html = '<article class="blk plan-tile tap" onclick="window.__vxPlan(\'' + esc(key) + '\')">';
+    html += '<div class="tile-head">' + coinLogoHtml(plan.symbol, 'tile') + '<span class="tile-sym">' + esc(plan.symbol) + '</span></div>';
+    html += '<div class="tile-score"><b class="' + (actionable ? 'v-accent' : '') + '">' + plan.score + '</b><small>执行证据分</small></div>';
+    html += '<div class="tile-tags"><span class="badge ' + dirClass + '">' + esc(plan.direction) + '</span>' +
+      (actionable ? '' : '<span class="pill warn">仅观察</span>') +
+      '<span class="tile-horizon">' + esc(horizonTag(plan)) + '</span></div>';
+    html += '<div class="tile-price">' + fmtPrice(plan.price) + '</div>';
+    html += '<div class="tile-chg ' + chgCls + '">' + fmtChange(plan.change24h) + '</div>';
     html += '</article>';
     return html;
   }
@@ -2219,7 +2230,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         html += '<div class="blk empty-blk"><div class="big">' + (S.selection.failed ? '本轮扫描未完成' : '今天没有通过门槛的机会') + '</div>' +
           '<p>' + (S.selection.failed ? '数据未完成核验，不能据此判断没有机会。' : '日线与 12 小时都没有计划通过全部门槛。没有就不列，不凑数——这是提醒软件的规矩。') + '</p></div>';
       } else {
-        html += plans.map(function (p) { return planCard(p, now); }).join('');
+        html += '<div class="grid grid-3">' + plans.map(function (p) { return planTile(p, now); }).join('') + '</div>';
       }
     }
 
@@ -2259,7 +2270,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       if (!plans.length) {
         html += '<div class="blk empty-blk"><div class="big">本周期没有可展示的候选</div><p>通过数据完整性校验的计划为 0，或评分全部低于 60 分展示线。原因见上方扫描说明。</p></div>';
       } else {
-        html += plans.map(function (p) { return planCard(p, now); }).join('');
+        html += '<div class="grid grid-3">' + plans.map(function (p) { return planTile(p, now); }).join('') + '</div>';
       }
     });
     if (S.scanRunning && !S.scans['12h']) {
@@ -2653,7 +2664,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var plans = coinPlansFor(symbol);
     var html = '<div class="zhead"><h2>本轮扫描评估</h2><span class="en">Scan</span></div>';
     if (plans.length) {
-      html += plans.map(function (p) { return planCard(p, Date.now()); }).join('');
+      html += '<div class="grid grid-3">' + plans.map(function (p) { return planTile(p, Date.now()); }).join('') + '</div>';
     } else if (!S.selection) {
       html += '<div class="blk"><p class="progress-line">本轮扫描尚未完成，完成后这里显示 ' + esc(symbol) + ' 的评估结果（评分与被拦原因）。</p>' +
         '<p style="margin-top:10px"><button class="refresh-btn" onclick="window.__vxGo(\'signals\')">去机会页看扫描进度</button></p></div>';
