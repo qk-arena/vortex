@@ -70,9 +70,8 @@ a { color: var(--accent); text-decoration: none; }
 .grid { display: grid; gap: 14px; }
 .grid-2 { grid-template-columns: repeat(2, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-4 { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 720px) {
-  .grid-4 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
 }
 .zhead {
@@ -107,10 +106,6 @@ details.fold { margin-top: 8px; }
 details.fold summary { cursor: pointer; font-size: 12px; color: var(--muted); }
 details.fold .fold-body { font-size: 12px; color: var(--muted); padding-top: 6px; }
 details.fold .fold-body p { margin: 4px 0; }
-.divergence-note {
-  margin-top: 10px; font-size: 12px; color: var(--warn);
-  border-left: 3px solid var(--warn); padding: 4px 0 4px 10px;
-}
 
 /* ---------- 独立统计块 ---------- */
 .stat-blk .k { font-size: 12px; color: var(--muted); display: block; }
@@ -2167,10 +2162,11 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       '<div class="verdict-word ' + wordClass + '">' + esc(ov.judgment) + '</div>' +
       '<p class="verdict-why">' + esc(ov.why) + '</p>';
     var divNote = S.selection ? VX.verdictPlanDivergenceNote(ov.judgment, plans) : null;
-    if (divNote) html += '<div class="divergence-note">' + esc(divNote) + '</div>';
     html += '<details class="fold"><summary>查看判断依据</summary><div class="fold-body"><p>' + esc(ov.risk.detail) + '</p>' +
       '<p>上涨 ' + ov.breadth.up + ' · 下跌 ' + ov.breadth.down + ' · 平盘 ' + ov.breadth.unchanged + '（币安 USDT 现货全市场样本）</p>' +
-      '<p>数据来源：' + esc(S.overviewSources) + '（完整口径见「我的」页）。</p></div></details></div>';
+      '<p>数据来源：' + esc(S.overviewSources) + '（完整口径见「我的」页）。</p></div></details>';
+    if (divNote) html += '<details class="fold"><summary>口径说明</summary><div class="fold-body"><p>' + esc(divNote) + '</p></div></details>';
+    html += '</div>';
 
     /* 风险总闸紧跟定调（仅极端风险时单独成块） */
     if (ov.risk.level === 'severe') {
@@ -2185,7 +2181,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var ethA = ov.assets.find(function (a) { return a.symbol === 'ETH'; });
     function trendWord(a) { return !a ? '—' : a.change24h > 0 ? '多头' : a.change24h < 0 ? '空头' : '震荡'; }
     function trendClass(a) { return !a ? '' : a.change24h > 0 ? 'v-up' : a.change24h < 0 ? 'v-down' : ''; }
-    evidenceHtml += '<div class="grid grid-4">' +
+    evidenceHtml += '<div class="grid grid-3">' +
       '<div class="blk stat-blk tap" onclick="window.__vxGo(\'market\')"><span class="k">市场宽度</span><span class="v">' + ov.breadth.upRatio.toFixed(1) + '%</span><span class="s">上涨 ' + ov.breadth.up + ' / ' + (ov.breadth.up + ov.breadth.down + ov.breadth.unchanged) + ' 个现货对</span></div>' +
       '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'BTC\')"><span class="k k-logo">' + coinLogoHtml('BTC', 'sm') + 'BTC 趋势</span><span class="v ' + trendClass(btcA) + '">' + trendWord(btcA) + '</span><span class="s">24H ' + (btcA ? fmtChange(btcA.change24h) : '数据缺失') + '</span></div>' +
       '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'ETH\')"><span class="k k-logo">' + coinLogoHtml('ETH', 'sm') + 'ETH 趋势</span><span class="v ' + trendClass(ethA) + '">' + trendWord(ethA) + '</span><span class="s">24H ' + (ethA ? fmtChange(ethA.change24h) : '数据缺失') + '</span></div>' +
@@ -2392,14 +2388,14 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var root = document.getElementById('market-root');
     root.innerHTML =
       '<div class="zhead" style="margin-top:2px"><h2>全球指数</h2><span class="en">Global Indices</span><span class="right">腾讯行情 · 可能延迟</span></div>' +
-      '<div class="grid grid-2" id="mkt-indices"></div>' +
+      '<div class="grid grid-3" id="mkt-indices"></div>' +
       '<div class="zhead"><h2>市场情绪</h2><span class="en">Sentiment</span><span class="right">近30日</span></div>' +
       '<div class="grid grid-3" id="mkt-sentiment"></div>' +
       '<p class="foot-note">加密为恐惧贪婪原始指数（Alternative.me）；A 股 / 美股为本站价格温度模型（指数收盘价 · 本站计算），非官方情绪指数。</p>' +
       '<div class="zhead"><h2>周期估值</h2><span class="en">Cycle Valuation</span><span class="right">Binance 日线 · 本站计算</span></div>' +
-      '<div class="grid grid-2" id="mkt-valuation"></div>' +
+      '<div class="grid grid-3" id="mkt-valuation"></div>' +
       '<div class="zhead"><h2>爆仓数据</h2><span class="en">Liquidations</span><span class="right" id="liq-scope">口径见块内标注</span></div>' +
-      '<div class="grid grid-4" id="mkt-liq"></div>' +
+      '<div class="grid grid-3" id="mkt-liq"></div>' +
       '<div id="mkt-liq-note"></div>';
 
     /* BTC（币安） + 全球指数（腾讯）：取不到的指数不渲染，不留「暂不可用」块 */
@@ -2803,7 +2799,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       function winCell(label, v) {
         return '<div class="blk stat-blk"><span class="k">' + label + '</span><span class="v ' + (v === null ? '' : v >= 0 ? 'v-up' : 'v-down') + '">' + (v === null ? '—' : fmtChange(v)) + '</span></div>';
       }
-      html += '<div class="grid grid-4">' + winCell('近 1 小时', chgBack(1)) + winCell('近 4 小时', chgBack(4)) +
+      html += '<div class="grid grid-3">' + winCell('近 1 小时', chgBack(1)) + winCell('近 4 小时', chgBack(4)) +
         winCell('近 24 小时', chgBack(24)) + winCell('近 7 天', closes[0] > 0 ? (lastClose / closes[0] - 1) * 100 : null) + '</div>';
       html += '<div class="blk"><div class="zlabel"><span>近 7 天走势 · 4 小时 K 线</span><span style="margin-left:auto">现货小时线聚合</span></div>' +
         '<canvas class="chart-canvas" id="coin-chart"></canvas></div>';
@@ -2815,7 +2811,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       var mark = VX.finiteNumber(pm.markPrice), fund = VX.finiteNumber(pm.lastFundingRate);
       var oiVal = d.oi && d.oi.payload ? VX.finiteNumber(d.oi.payload.openInterest) : null;
       html += '<div class="zhead"><h2>合约数据</h2><span class="en">Futures</span><span class="right">USDT 永续</span></div>' +
-        '<div class="grid grid-4">' +
+        '<div class="grid grid-3">' +
         '<div class="blk stat-blk"><span class="k">标记价格</span><span class="v">' + fmtPrice(mark) + '</span></div>' +
         '<div class="blk stat-blk"><span class="k">资金费率</span><span class="v">' + (fund === null ? '—' : (fund * 100).toFixed(4) + '%') + '</span><span class="s">按期结算</span></div>' +
         '<div class="blk stat-blk"><span class="k">未平仓量</span><span class="v">' + (oiVal === null ? '—' : fmtCompact(oiVal)) + '</span><span class="s">' + (oiVal !== null && mark !== null ? '约 ' + fmtUsd(oiVal * mark) : '数据缺失') + '</span></div>' +
@@ -2982,7 +2978,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     }
     if (!cells.length) return '';
     return '<div class="zhead"><h2>市值与供应</h2><span class="en">Cap & Supply</span><span class="right">CoinGecko</span></div>' +
-      '<div class="grid grid-4">' + cells.map(function (c) {
+      '<div class="grid grid-3">' + cells.map(function (c) {
         return '<div class="blk stat-blk"><span class="k">' + c[0] + '</span><span class="v" style="font-size:16px">' + c[1] + '</span></div>';
       }).join('') + '</div>';
   }
@@ -3504,7 +3500,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       var v90 = vwap(closed.slice(-90)), v30 = vwap(closed.slice(-30));
       var lastClose = closed.length ? Number(closed[closed.length - 1][4]) : null;
       var px = price !== null ? price : lastClose;
-      html += '<div class="grid grid-4">' +
+      html += '<div class="grid grid-3">' +
         cell('90 日 VWAP', v90 === null ? '—' : fmtPrice(v90), '近 90 根日线成交量加权') +
         cell('30 日 VWAP', v30 === null ? '—' : fmtPrice(v30), '近 30 根日线成交量加权') +
         cell('现价', px === null ? '—' : fmtPrice(px), '') +
