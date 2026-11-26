@@ -138,10 +138,12 @@ details.fold .fold-body p { margin: 4px 0; }
 .chart-canvas { width: 100%; height: 190px; display: block; margin-top: 8px; }
 
 /* ---------- 币种详情标签页 ---------- */
-.coin-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
+.coin-tabs { display: flex; flex-wrap: nowrap; gap: 8px; margin: 14px 0 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.coin-tabs::-webkit-scrollbar { display: none; }
 .coin-tab {
   background: var(--panel); color: var(--muted); border: 1px solid var(--line);
   border-radius: 999px; padding: 6px 13px; font-size: 12.5px; cursor: pointer; font: inherit;
+  flex-shrink: 0; white-space: nowrap;
 }
 .coin-tab.active { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 700; }
 .sub-tabs { display: flex; gap: 8px; margin: 12px 0; }
@@ -150,11 +152,15 @@ details.fold .fold-body p { margin: 4px 0; }
   padding: 4px 2px; font-size: 13.5px; cursor: pointer; font: inherit;
 }
 .sub-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 700; }
-.flow-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
-.flow-table th { text-align: right; color: var(--muted); font-weight: 400; font-size: 11.5px; padding: 5px 4px; border-bottom: 1px solid var(--line); }
+.flow-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 8px; font-size: 16px; }
+.flow-table th { text-align: right; color: var(--muted); font-weight: 400; font-size: 11.5px; padding: 10px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--panel); }
 .flow-table th:first-child { text-align: left; }
-.flow-table td { text-align: right; padding: 7px 4px; border-bottom: 1px solid var(--line); color: var(--text-secondary); }
-.flow-table td.fw { text-align: left; color: var(--muted); white-space: nowrap; }
+.flow-table td { text-align: right; padding: 15px 8px; border-bottom: 1px solid var(--line); color: var(--text-secondary); font-size: 16.5px; line-height: 1.35; white-space: nowrap; }
+.flow-table td.fw { text-align: left; color: var(--muted); white-space: nowrap; font-size: 14px; }
+/* 首列（时间）冻结：横向滚动时钉在左侧，背景同卡片底色防透字，右侧一条细分隔线。 */
+.flow-table th:first-child, .flow-table td.fw { position: sticky; left: 0; z-index: 2; background: var(--panel); box-shadow: 1px 0 0 var(--line); }
+.flow-table th:first-child { z-index: 3; }
+.flow-table td sub { font-size: 10px; }
 .flow-table td.v-up { color: var(--up); }
 .flow-table td.v-down { color: var(--down); }
 .flow-table td.cov-cell { text-align: right; width: 74px; }
@@ -2933,6 +2939,18 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     return a.toFixed(2);
   }
   function fmtFlowSigned(v) { return (v < 0 ? '-' : '') + fmtFlowAbs(v); }
+  /* 资金市值比（原始比值）：≥0.001 用普通小数（3 位有效数字、去尾零）；
+   * 更小用 ValueScan 式下标零位记法，如 0.0₄519 表示 0.0000519（下标为小数点后首位有效数字前的 0 的个数）。 */
+  function fmtFlowRatio(r) {
+    if (r === null || !isFinite(r)) return '—';
+    if (r <= 0) return '0';
+    if (r >= 0.001) return String(parseFloat(r.toPrecision(3)));
+    var e = Math.floor(Math.log10(r));
+    var zeros = -e - 1;
+    var digits = String(Math.round(r / Math.pow(10, e) * 100));
+    if (digits.length > 3) { digits = '100'; zeros -= 1; }
+    return '0.0<sub>' + zeros + '</sub>' + digits;
+  }
   function fmtDur(ms) {
     var d = ms / 86400000;
     if (d >= 365) return (d / 365).toFixed(1) + ' 年';
@@ -2965,7 +2983,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     html += '<details class="fold blk" style="margin-top:14px"><summary>口径说明</summary><div class="fold-body">' +
       '<p>数据范围：仅币安单一交易所（现货为 ' + esc(symbol) + 'USDT 现货，合约为 ' + esc(symbol) + 'USDT 永续），由浏览器直连币安公开 K 线接口汇总。参考产品 ValueScan 的官方说明只称「主流交易所实时抓取」，从不点名交易所名单，且为多所聚合，数值必然与本页不同，不可直接对比。</p>' +
       '<p>口径与 ValueScan 官方手册一致：流入 = 主动买入成交额（K 线自带的主动买入量字段），流出 = 主动卖出成交额（总成交额 − 主动买入），净流入 = 流入 − 流出。这里统计的是<b>全部成交</b>的主动方向，不做大单门槛过滤；每笔成交同时有买卖双方，流入/流出是主动方向的统计，不是资金真的进出交易所。</p>' +
-      '<p>净流入变化 = 本窗口净流入 − 上一个等长窗口的净流入，反映净流的增减趋势。资金市值比 =（流入 + 流出）÷ 市值 × 100%，市值取自 CoinGecko / 市值池数据，取不到时该列留空。</p>' +
+      '<p>净流入变化 =（本窗口净流入 − 上一个等长窗口的净流入）÷ 上一个等长窗口净流入的绝对值，以百分比展示（不带符号，颜色表方向：净流变强绿、变弱红；上个窗口净流入为 0 或未覆盖时留空）。资金市值比 =（流入 + 流出）÷ 市值的原始比值，极小值用下标零位记法（如 0.0₄519 即 0.0000519），颜色同本行净流入变化方向；市值取自 CoinGecko / 市值池数据，取不到时该列留空。</p>' +
       '<p>窗口按整根 K 线归属（≤1 小时窗口用 1 分钟线，≤2 天用小时线，更长用日线），边界误差小于一个 K 线周期；当前未收盘的 K 线计入当前窗口。标「样本不完整」的窗口是该市场历史短于窗口长度，按实际覆盖计算并注明覆盖时长，不冒充完整。</p>' +
       '</div></details>';
     return html;
@@ -2993,17 +3011,21 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var rows = FLOW_WINDOWS.map(function (w) {
       var s = flowWindow(st, w[0], now);
       if (!s) return '<tr><td class="fw">' + w[1] + '</td><td colspan="5" class="cov-cell" style="text-align:left">该粒度 K 线未取回</td></tr>';
-      var ratio = cap ? (s.in + s.out) / cap * 100 : null;
+      var ratio = cap ? (s.in + s.out) / cap : null;
+      var prevNet = s.change === null ? null : s.net - s.change;
+      var chgOk = s.change !== null && prevNet !== 0;
+      var dirCls = !chgOk || s.change === 0 ? '' : s.change > 0 ? 'v-up' : 'v-down';
+      var chgTxt = !chgOk ? '—' : Math.abs(s.change / Math.abs(prevNet) * 100).toFixed(2) + '%';
       var partial = !s.complete;
       return '<tr><td class="fw">' + w[1] + (partial ? '<span class="cov-badge warn">样本不完整 · 覆盖 ' + fmtDur(now - s.sinceMs) + '</span>' : '') + '</td>' +
-        '<td class="v-up">' + fmtFlowAbs(s.in) + '</td>' +
-        '<td class="v-down">' + fmtFlowAbs(s.out) + '</td>' +
+        '<td>' + fmtFlowAbs(s.in) + '</td>' +
+        '<td>' + fmtFlowAbs(s.out) + '</td>' +
         '<td class="' + (s.net > 0 ? 'v-up' : s.net < 0 ? 'v-down' : '') + '">' + fmtFlowSigned(s.net) + '</td>' +
-        '<td class="' + (s.change === null ? '' : s.change > 0 ? 'v-up' : s.change < 0 ? 'v-down' : '') + '">' + (s.change === null ? '—' : fmtFlowSigned(s.change)) + '</td>' +
-        '<td>' + (ratio === null ? '—' : ratio.toFixed(2) + '%') + '</td></tr>';
+        '<td class="' + dirCls + '">' + chgTxt + '</td>' +
+        '<td class="' + dirCls + '">' + (ratio === null ? '—' : fmtFlowRatio(ratio)) + '</td></tr>';
     }).join('');
     return '<div class="blk"><div class="zlabel"><span>主力资金 · 全部成交主动方向（无大单过滤）</span><span style="margin-left:auto">更新 ' + fmtClock(now) + '</span></div>' +
-      '<div class="flow-scroll"><table class="flow-table"><thead><tr><th>时间</th><th>流入($)</th><th>流出($)</th><th>净流入($)</th><th>净流入变化($)</th><th>资金市值比</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<div class="flow-scroll"><table class="flow-table"><thead><tr><th>时间</th><th>流入($)</th><th>流出($)</th><th>净流入($)</th><th>净流入变化</th><th>资金市值比</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
       '<p class="cap-line">金额单位：美元；净流入变化为本窗口对比上一个等长窗口。窗口越长，K 线粒度越粗（日线窗口按整根日线归属）。</p></div>';
   }
   window.__vxHistSpan = function (market, span) {
@@ -3327,8 +3349,8 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       var rows = cf.rows, last = rows[rows.length - 1];
       function cell(k, v, cls) { return '<div class="blk stat-blk"><span class="k">' + k + '</span><span class="v ' + (cls || '') + '" style="font-size:16px">' + v + '</span></div>'; }
       html += '<div class="grid grid-3">' +
-        cell('最近一日流入交易所', fmtUsd(last.in), 'v-up') +
-        cell('最近一日流出交易所', fmtUsd(last.out), 'v-down') +
+        cell('最近一日流入交易所', fmtUsd(last.in)) +
+        cell('最近一日流出交易所', fmtUsd(last.out)) +
         cell('净流入交易所', fmtUsd(Math.abs(last.net)) + (last.net >= 0 ? '' : '（净流出）'), last.net > 0 ? 'v-up' : last.net < 0 ? 'v-down' : '') +
         '</div>' +
         '<div class="blk" style="margin-top:14px"><div class="zlabel"><span>近 ' + rows.length + ' 日净流入交易所（逐日）</span><span style="margin-left:auto">截至 ' + fmtTime(last.time) + '</span></div>' +
