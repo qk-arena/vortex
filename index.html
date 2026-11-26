@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>VORTEX · 今日做多还是做空</title>
 <meta name="description" content="VORTEX 静态版：打开就知道今天做多还是做空、做哪些币、用什么产品、什么时候做、什么价格做。全部数据由浏览器直连公开接口实时计算。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M5 5 23 18 32 51 19 35Z' fill='%232c61c4'/%3E%3Cpath d='M59 5 41 18 32 51 45 35Z' fill='%2329a9bf'/%3E%3Cpath d='m32 51 3 7-3 6-3-6Z' fill='%23ff7815'/%3E%3C/svg%3E">
 <style>
 /* VORTEX 静态版 · B 配色 + v3 独立方块系统
  * 每一项是自己独立的一个块（自己的底、边框、圆角），块间统一 14px 真间隙。
@@ -47,7 +48,8 @@ a { color: var(--accent); text-decoration: none; }
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(6px);
 }
-.brand { font-size: 19px; font-weight: 800; letter-spacing: 2px; }
+.brand { display: flex; align-items: center; gap: 9px; font-size: 19px; font-weight: 800; letter-spacing: 2px; }
+.brand-mark { width: 27px; height: 27px; flex: none; display: block; }
 .brand small { display: block; font-size: 10px; font-weight: 400; letter-spacing: 1px; color: var(--muted); }
 .topbar .spacer { flex: 1; }
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--up); display: inline-block; margin-right: 6px; }
@@ -85,9 +87,6 @@ a { color: var(--accent); text-decoration: none; }
 .foot-note { font-size: 11px; color: var(--muted); margin: 8px 2px 0; }
 
 /* ---------- 状态条 ---------- */
-.status-strip { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
-.status-strip .item b { font-weight: 600; }
-.status-strip .item span { color: var(--muted); margin-right: 6px; font-size: 12px; }
 
 /* ---------- 定调块 ---------- */
 .verdict-word { font-size: 33px; font-weight: 800; line-height: 1.15; margin: 4px 0 6px; }
@@ -274,7 +273,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
 <body>
 
 <header class="topbar">
-  <div class="brand">VORTEX<small>全景交易系统 · 静态版</small></div>
+  <div class="brand"><svg class="brand-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="VORTEX"><path d="M5 5 23 18 32 51 19 35Z" fill="#2c61c4"/><path d="M59 5 41 18 32 51 45 35Z" fill="#29a9bf"/><path d="m32 51 3 7-3 6-3-6Z" fill="#ff7815"/></svg><span class="brand-word">VORTEX<small>全景交易系统 · 静态版</small></span></div>
   <div class="spacer"></div>
   <span class="top-meta" id="top-clock"><span class="live-dot off" id="top-dot"></span><span id="top-state">连接中</span></span>
 </header>
@@ -1952,13 +1951,6 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var ov = S.overview;
     var plans = S.selection ? S.selection.plans : [];
     var actCount = S.selection ? actionableCount(plans, now) : 0;
-
-    /* 状态块 */
-    html += '<div class="blk status-strip">' +
-      '<span class="item"><span>行情</span><b>' + statusText(S.overviewStatus) + '</b></span>' +
-      '<span class="item"><span>机会</span><b>' + (S.selection ? actCount + ' 条达标' : '扫描中') + '</b></span>' +
-      '<span class="item"><span>风险</span><b>' + esc(ov.risk.title) + '</b></span>' +
-      '<span class="item"><span>更新</span><b>' + fmtClock(now) + '</b></span></div>';
 
     /* 定调块 */
     var wordClass = ov.judgment === '适合做多' ? 'long' : ov.judgment === '适合做空' ? 'short' : ov.judgment === '极端风险' ? 'severe' : 'flat';
