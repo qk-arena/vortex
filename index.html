@@ -121,6 +121,26 @@ details.fold .fold-body p { margin: 4px 0; }
 .pulse-blk .p { font-size: 16px; font-weight: 700; margin-top: 3px; }
 .pulse-blk .c { font-size: 12px; }
 
+/* ---------- 大盘速览大砖（2 个一排，价格放大） ---------- */
+.snap-blk { padding: 14px; }
+.snap-blk .sym b { font-size: 14.5px; }
+.snap-blk .p { font-size: 21px; margin-top: 5px; font-variant-numeric: tabular-nums; }
+.snap-blk .c { font-size: 13px; font-weight: 700; margin-top: 1px; }
+
+/* ---------- 趋势分析块 ---------- */
+.trend-row { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.trend-row:last-of-type { border-bottom: none; }
+.trend-row .tf { font-weight: 700; font-size: 13px; flex: none; width: 34px; }
+.trend-row .tb { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.trend-ind { font-size: 12.5px; color: var(--text-secondary); margin-top: 9px; line-height: 1.6; }
+.trend-ind b { color: var(--text); }
+.trend-concl { font-size: 13px; margin-top: 7px; }
+.trend-concl b { color: var(--accent); }
+
+/* ---------- 追踪时间行（上榜/下榜时间写在块上） ---------- */
+.track-time { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+.track-time b { color: var(--text-secondary); font-weight: 600; }
+
 /* ---------- 可点块与币种详情 ---------- */
 .tap { cursor: pointer; transition: transform .08s ease, border-color .08s ease; }
 .tap:active { transform: scale(.985); border-color: var(--line-strong); }
@@ -405,6 +425,10 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     <div class="stack" id="tracking-root">
       <div class="blk"><p class="progress-line">正在读取服务端追踪账本…</p></div>
     </div>
+    <div class="zhead"><h2>建议留档</h2><span class="en">Advice Ledger</span><span class="right" id="advice-updated"></span></div>
+    <div class="stack" id="advice-root">
+      <div class="blk"><p class="progress-line">正在读取建议留档…</p></div>
+    </div>
   </section>
 
   <!-- ================= 市场 MARKET ================= -->
@@ -443,29 +467,20 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         <p class="dim">未过门的计划只显示方向、评分与被拦原因，不生成入场、止盈、止损参数。评分与完整度都不是胜率。</p>
       </div>
       <div class="blk doc-blk">
-        <h3>定调口径</h3>
-        <p>今日定调看币安 USDT 现货全市场 24 小时涨跌宽度：上涨占比 ≥ 58% 且 BTC、ETH 同向上涨 → 适合做多；≤ 42% 且同向下跌 → 适合做空；BTC 24H 波动达 ±6%，或上涨占比 ≤ 15% / ≥ 85% → 极端风险（风险总闸）。其余为震荡。定调与单币计划（日线 / 12 小时收盘结构）周期不同，方向可以不一致，页面会给出示。</p>
-        <p>扫描池：市值前 50 非稳定币（CoinGecko → CoinLore → CoinPaprika 三源依次回退）。市值源全部不可用时，静态版回退为币安 24H 成交额前 50，并在页面明确标注「成交额排序」——服务端版此时是停止扫描，两者口径差异在此写明。</p>
-      </div>
-      <div class="blk doc-blk">
-        <h3>数据从哪来</h3>
-        <p>行情全部由你的浏览器直连公开接口，本站没有服务器代取：币安现货与 U 本位合约官方 REST（多主机依次回退，K 线预算 2200ms、行情 1800ms）；市值排名 CoinGecko / CoinLore / CoinPaprika；恐惧贪婪指数 Alternative.me；BTC 市占率 CoinGecko / CoinPaprika 全球数据。每个数字都带抓取时间；页面显示的时间为北京时间。例外只有两项：账号与 AI 追踪账本读服务端版接口，因为这两项本来就只存在于服务端。</p>
-        <p>全球指数来自腾讯行情公开接口（指数报价与日线收盘历史）；A 股 / 美股价格温度为本站模型，用上证指数与标普500的日线收盘在本页内计算。MVRV-Z 需要链上已实现市值数据，尚无已授权且可核验的浏览器可直连来源，市场页已不展示该块，不从价格曲线猜测。爆仓数据没有公开的历史汇总接口：静态版尝试用币安合约爆仓事件流在本页打开期间实时观察并明确标注样本口径，连不上时显示暂无可靠数据源。</p>
-      </div>
-      <div class="blk doc-blk">
-        <h3>静态版与服务端版的差异</h3>
-        <ul>
-          <li>账号与 AI 追踪共用服务端版：本页的注册、登录、邀请与追踪板块直接读写服务端版的账号库与追踪账本；服务端不可达时追踪回退为币页的本地规则现算并明确标注，账号功能暂停并明示。</li>
-          <li>没有发布冻结：服务端版把通过核验的计划写入数据库冻结存档；静态版每次打开实时重算，计划随最新收盘滚动。</li>
-          <li>没有每日观点扫描：观点页只有注册名单与主页链接。</li>
-          <li>没有服务器扫描预算：服务端单轮 25 秒截止、并发 3、池轮转；静态版在浏览器内跑完为止（并发 6），诊断计数口径一致。</li>
-        </ul>
-      </div>
-      <div class="blk doc-blk">
         <h3>风险提示</h3>
         <p>本页所有内容是数据与规则的机械呈现，不构成投资建议。加密货币波动剧烈，计划中的止损、失效条件是规则的一部分，不是收益保证。执行前请回到交易所核对最新价格与合约状态。</p>
         <p class="dim">VORTEX 静态版 · 数据源与抓取时间标注于各页 · 页面版本随源码仓库更新。</p>
       </div>
+      <details class="fold blk">
+        <summary>口径与数据来源</summary>
+        <div class="fold-body">
+          <p>定调口径：今日定调看币安 USDT 现货全市场 24 小时涨跌宽度：上涨占比 ≥ 58% 且 BTC、ETH 同向上涨 → 适合做多；≤ 42% 且同向下跌 → 适合做空；BTC 24H 波动达 ±6%，或上涨占比 ≤ 15% / ≥ 85% → 极端风险（风险总闸）。其余为震荡。定调与单币计划（日线 / 12 小时收盘结构）周期不同，方向可以不一致，页面会给出示。</p>
+          <p>扫描池：市值前 50 非稳定币（CoinGecko → CoinLore → CoinPaprika 三源依次回退）。市值源全部不可用时，静态版回退为币安 24H 成交额前 50，并在页面明确标注「成交额排序」——服务端版此时是停止扫描，两者口径差异在此写明。</p>
+          <p>数据从哪来：行情全部由你的浏览器直连公开接口，本站没有服务器代取：币安现货与 U 本位合约官方 REST（多主机依次回退，K 线预算 2200ms、行情 1800ms）；市值排名 CoinGecko / CoinLore / CoinPaprika；恐惧贪婪指数 Alternative.me；BTC 市占率 CoinGecko / CoinPaprika 全球数据。每个数字都带抓取时间；页面显示的时间为北京时间。例外只有两项：账号与 AI 追踪账本读服务端版接口，因为这两项本来就只存在于服务端。</p>
+          <p>全球指数来自腾讯行情公开接口（指数报价与日线收盘历史）；A 股 / 美股价格温度为本站模型，用上证指数与标普500的日线收盘在本页内计算。MVRV-Z 需要链上已实现市值数据，尚无已授权且可核验的浏览器可直连来源，市场页已不展示该块，不从价格曲线猜测。爆仓数据没有公开的历史汇总接口：静态版尝试用币安合约爆仓事件流在本页打开期间实时观察并明确标注样本口径，连不上时显示暂无可靠数据源。</p>
+          <p>趋势分析口径（机会详情页，纯展示、不进评分）：每周期只用已收盘 K 线（币安现货 1d / 1w / 1M）；方向票 = 收盘相对 MA20（上 +1 / 下 −1）+ 近 5 根与前 5 根高低点结构（高低点双抬高 +1 / 双降低 −1 / 其余 0），合计 ≥ +1 为多头、≤ −1 为空头、0 为震荡；已收盘不足 30 根记数据不足。综合计票 = 三周期方向 + 现货与合约 24H 净流入（taker 口径，流入为正记多头票）+ 资金费率（> +0.05% 记空头票，多头拥挤；< −0.05% 记多头票）+ 日线量能比（≥ 1 时跟随日线方向记一票）。精选与可执行计划的建议在发行时连同指标快照冻结写入服务端留档，只增不改，供事后核对。</p>
+        </div>
+      </details>
     </div>
   </section>
 
@@ -1687,6 +1702,16 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   var dtfS = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
   function fmtTime(ts) { return ts ? dtf.format(new Date(ts)) : '—'; }
   function fmtClock(ts) { return ts ? dtfS.format(new Date(ts)) : '—'; }
+  /* 上榜时间口径：11-27 04:05（北京时间），追踪块上明写。 */
+  function fmtDayTime(ts) { return ts ? fmtTime(ts).replace('/', '-') : '—'; }
+  function fmtDuration(fromTs, toTs) {
+    if (!fromTs || !toTs || toTs <= fromTs) return '';
+    var mins = Math.floor((toTs - fromTs) / 60000);
+    if (mins < 60) return Math.max(mins, 1) + ' 分钟';
+    var h = Math.floor(mins / 60);
+    if (h < 48) return h + ' 小时';
+    return Math.floor(h / 24) + ' 天 ' + (h % 24) + ' 小时';
+  }
   function hostOf(url) { try { return new URL(url).hostname; } catch (e) { return ''; } }
 
   /* ---------------- 官方 logo ----------------
@@ -1989,6 +2014,17 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
    * 与仅观察砖一眼可分。被拦原因、完整度、有效期与五问明细全在详情页，点砖进入。
    * 注册表按内容键（币种|周期|收盘时间）存计划对象，详情路由据此找回。 */
   var planByKey = {};
+  /* 排序规则（用户定）：成交额/市值前 6 的币（BTC/ETH/BNB/SOL/XRP/DOGE）钉在最前，
+   * 其余币按机会评分从高到低排。首页精选与机会页扫描列表共用。 */
+  var TOP6_SYMBOLS = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE'];
+  function orderPlans(plans) {
+    return plans.slice().sort(function (a, b) {
+      var ai = TOP6_SYMBOLS.indexOf(a.symbol), bi = TOP6_SYMBOLS.indexOf(b.symbol);
+      var ar = ai >= 0 ? ai : 100, br = bi >= 0 ? bi : 100;
+      if (ar !== br) return ar - br;
+      return (b.score || 0) - (a.score || 0);
+    });
+  }
   function planKey(plan) { return plan.symbol + '|' + plan.horizon + '|' + (plan.closedAt || ''); }
   function planProduct(plan) { return plan.market === 'futures' ? '币安 U 本位永续合约' : '币安现货'; }
   function planHorizonLabel(plan) { return plan.horizon === '1d' ? '日线 1D' : plan.horizon === '12h' ? '12 小时 12H' : String(plan.horizon).toUpperCase(); }
@@ -2005,7 +2041,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     html += '<div class="tile-head">' + coinLogoHtml(plan.symbol, 'tile') + '<span class="tile-sym">' + esc(plan.symbol) + '</span></div>';
     html += '<div class="tile-score"><b class="' + (actionable ? 'v-accent' : '') + '">' + plan.score + '</b><small>执行证据分</small></div>';
     html += '<div class="tile-tags"><span class="badge ' + dirClass + '">' + esc(plan.direction) + '</span>' +
-      (actionable ? '' : '<span class="pill warn">仅观察</span>') +
+      (actionable ? '' : '<span class="pill warn">观察</span>') +
       '<span class="tile-horizon">' + esc(horizonTag(plan)) + '</span></div>';
     html += '<div class="tile-price">' + fmtPrice(plan.price) + '</div>';
     html += '<div class="tile-chg ' + chgCls + '">' + fmtChange(plan.change24h) + '</div>';
@@ -2093,7 +2129,12 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         '<div class="cell"><span>止损位 · SL</span><b>' + fmtPrice(plan.stopLoss) + '</b></div></div>';
     } else {
       html += '<p class="wait-line">' + esc(view.label) + '</p>' +
-        '<p class="fact-line">未通过执行门的计划不生成入场区、止盈与止损参数——只给方向、评分与被拦原因，不凑数。</p>';
+        '<div class="price-grid">' +
+        '<div class="cell"><span>观察建议 · 方向</span><b>' + esc(plan.direction) + '</b></div>' +
+        '<div class="cell"><span>观察建议 · 触发</span><b>' + esc(planHorizonLabel(plan)) + '收盘确认且全部门槛通过</b></div>' +
+        '<div class="cell"><span>观察建议 · 入场区</span><b>达标升级后生成</b></div>' +
+        '<div class="cell"><span>观察建议 · 止盈 / 止损</span><b>达标升级后生成</b></div></div>' +
+        '<p class="fact-line">这是观察建议：结构与正式计划相同（方向、触发、失效、有效期、冻结时间都在本页），但价格参数只在达标升级为可执行计划后才冻结生成——未过门不给入场、止盈、止损数字，不凑数。</p>';
     }
     html += '</div>';
 
@@ -2114,6 +2155,10 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       '<p class="fact-line" style="margin-top:0">证据：' + esc((plan.evidence || []).join(' · ') || '无') + '</p>' +
       (plan.reasons || []).map(function (r) { return '<p class="fact-line">' + esc(r) + '</p>'; }).join('') + '</div>';
 
+    /* 趋势分析（多周期 + 资金指标，异步填充；纯展示层，不进评分） */
+    html += '<div class="zhead"><h2>趋势分析</h2><span class="en">Trend</span><span class="right">日线 / 周线 / 月线 · 机械规则</span></div>' +
+      '<div class="blk" id="plan-trend"><p class="progress-line">正在读取多周期 K 线与资金指标…</p></div>';
+
     /* 未来走势展望 */
     html += outlookHtml(plan, actionable);
     return html;
@@ -2129,6 +2174,173 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       return;
     }
     root.innerHTML = planDetailHtml(plan, Date.now());
+    loadPlanTrend(plan);
+  }
+
+  /* ---------------- 趋势分析（多周期机械规则 + 资金指标，纯展示层） ----------------
+   * 规则（口径全文在「口径与数据来源」折叠）：每周期只用已收盘 K 线；
+   * 方向票 = 收盘相对 MA20（上 +1 / 下 −1）+ 近 5 根与前 5 根高低点结构（双抬高 +1 / 双降低 −1 / 其余 0）；
+   * 合计 ≥ +1 多头、≤ −1 空头、0 震荡。已收盘不足 30 根 → 数据不足，不给方向。
+   * 综合计票并入：三周期方向、现货/合约 24H 净流入（taker 口径）、资金费率、日线量能比，
+   * 每个数值都明示在块里；缺哪个写哪个缺，绝不替代猜测。本块不回写评分与执行门。 */
+  var trendSnapshots = {};
+  function fmtSignedUsd(v) {
+    if (v === null || v === undefined || !Number.isFinite(v)) return '—';
+    return (v < 0 ? '-' : '+') + fmtUsd(Math.abs(v));
+  }
+  function closedCandles(rows) {
+    var now = Date.now();
+    return (rows || []).map(function (r) {
+      return { close: VX.finiteNumber(r[4]), high: VX.finiteNumber(r[2]), low: VX.finiteNumber(r[3]),
+        quoteVol: VX.finiteNumber(r[7]), closeTime: VX.finiteNumber(r[6]) };
+    }).filter(function (c) { return c.close !== null && c.close > 0 && c.closeTime !== null && c.closeTime < now; });
+  }
+  function analyzeTimeframe(candles) {
+    if (!candles || candles.length < 30) return null;
+    var closes = candles.map(function (c) { return c.close; });
+    var ma20 = closes.slice(-20).reduce(function (s, v) { return s + v; }, 0) / 20;
+    var close = closes[closes.length - 1];
+    var vsMa = (close / ma20 - 1) * 100;
+    var maVote = close > ma20 ? 1 : close < ma20 ? -1 : 0;
+    function maxH(arr) { return Math.max.apply(null, arr.map(function (c) { return c.high; })); }
+    function minL(arr) { return Math.min.apply(null, arr.map(function (c) { return c.low; })); }
+    var recent = candles.slice(-5), prev = candles.slice(-10, -5);
+    var struct = (maxH(recent) > maxH(prev) && minL(recent) > minL(prev)) ? 1
+      : (maxH(recent) < maxH(prev) && minL(recent) < minL(prev)) ? -1 : 0;
+    var total = maVote + struct;
+    return {
+      dir: total >= 1 ? '多头' : total <= -1 ? '空头' : '震荡',
+      basis: '收盘 ' + fmtPrice(close) + ' ' + (vsMa >= 0 ? '高于' : '低于') + ' MA20 ' + fmtPrice(ma20) + '（' + fmtChange(vsMa) + '）· 近 5 根' +
+        (struct === 1 ? '高点与低点双双抬高' : struct === -1 ? '高点与低点双双降低' : '高低点方向不一'),
+    };
+  }
+  function netFlowFromHourly(rows) {
+    if (!Array.isArray(rows) || !rows.length) return null;
+    var net = 0, seen = 0;
+    rows.forEach(function (r) {
+      var qv = VX.finiteNumber(r[7]), tbq = VX.finiteNumber(r[10]);
+      if (qv === null || tbq === null) return;
+      net += 2 * tbq - qv; seen++;
+    });
+    return seen >= 12 ? net : null;
+  }
+  function loadPlanTrend(plan) {
+    var box = document.getElementById('plan-trend');
+    if (!box) return;
+    var pair = plan.symbol + 'USDT';
+    function get(hosts, path) {
+      return fetchCoinJson(hosts, path, function (v) { return v !== null && v !== undefined; }, 9000)
+        .then(function (r) { return r ? r.payload : null; })
+        .catch(function () { return null; });
+    }
+    function klines(hosts, base, interval, limit) {
+      return get(hosts, base + '?symbol=' + pair + '&interval=' + interval + '&limit=' + limit)
+        .then(function (v) { return Array.isArray(v) ? v : null; });
+    }
+    Promise.all([
+      klines(VX.SPOT_HOSTS, '/api/v3/klines', '1d', 80),
+      klines(VX.SPOT_HOSTS, '/api/v3/klines', '1w', 80),
+      klines(VX.SPOT_HOSTS, '/api/v3/klines', '1M', 40),
+      klines(VX.SPOT_HOSTS, '/api/v3/klines', '1h', 24),
+      klines(VX.FUTURES_HOSTS, '/fapi/v1/klines', '1h', 24),
+      get(VX.FUTURES_HOSTS, '/fapi/v1/premiumIndex?symbol=' + pair),
+    ]).then(function (r) {
+      if (!document.getElementById('plan-trend')) return;
+      var d1 = closedCandles(r[0]), wk = closedCandles(r[1]), mo = closedCandles(r[2]);
+      var tfs = [['日线', analyzeTimeframe(d1)], ['周线', analyzeTimeframe(wk)], ['月线', analyzeTimeframe(mo)]];
+      var spotNet = netFlowFromHourly(r[3]);
+      var futNet = netFlowFromHourly(r[4]);
+      var funding = r[5] ? VX.finiteNumber(r[5].lastFundingRate) : null;
+      var volRatio = null;
+      if (d1.length >= 21) {
+        var prevAvg = d1.slice(-21, -1).reduce(function (s, c) { return s + (c.quoteVol || 0); }, 0) / 20;
+        if (prevAvg > 0) volRatio = (d1[d1.length - 1].quoteVol || 0) / prevAvg;
+      }
+      /* 机械计票：多头票 / 空头票 */
+      var bull = 0, bear = 0;
+      tfs.forEach(function (t) { if (!t[1]) return; if (t[1].dir === '多头') bull++; else if (t[1].dir === '空头') bear++; });
+      if (spotNet !== null) { if (spotNet > 0) bull++; else if (spotNet < 0) bear++; }
+      if (futNet !== null) { if (futNet > 0) bull++; else if (futNet < 0) bear++; }
+      if (funding !== null) { if (funding > 0.0005) bear++; else if (funding < -0.0005) bull++; }
+      if (volRatio !== null && volRatio >= 1 && tfs[0][1]) { if (tfs[0][1].dir === '多头') bull++; else if (tfs[0][1].dir === '空头') bear++; }
+      var net = bull - bear;
+      /* 三周期与计划方向的对齐（只看周期，不含资金票） */
+      var planWord = plan.direction === '做多' ? '多头' : plan.direction === '做空' ? '空头' : null;
+      var avail = tfs.filter(function (t) { return t[1]; });
+      var align;
+      if (planWord) {
+        var matches = avail.filter(function (t) { return t[1].dir === planWord; }).length;
+        var opposes = avail.filter(function (t) { return t[1].dir !== '震荡' && t[1].dir !== planWord; }).length;
+        align = (opposes === 0 && matches >= 2) ? '共振' : (matches === 0 && opposes >= 1) ? '背离' : '部分背离';
+      } else {
+        align = (avail.length >= 2 && avail.every(function (t) { return t[1].dir === avail[0][1].dir; }) && avail[0][1].dir !== '震荡')
+          ? '三周期同向（' + avail[0][1].dir + '）' : '三周期分化';
+      }
+      var conclusion;
+      if (plan.direction === '做多') conclusion = net >= 2 ? '多指标合力偏多，与计划方向一致' : net <= -2 ? '多指标合力偏空，与计划方向背离' : '多空交织，合力有限，按计划失效条件执行';
+      else if (plan.direction === '做空') conclusion = net <= -2 ? '多指标合力偏空，与计划方向一致' : net >= 2 ? '多指标合力偏多，与计划方向背离' : '多空交织，合力有限，按计划失效条件执行';
+      else conclusion = net >= 2 ? '多指标合力偏多' : net <= -2 ? '多指标合力偏空' : '多空交织，无明确合力';
+      var snapshot = {
+        tf: { '1d': tfs[0][1] ? tfs[0][1].dir : null, '1w': tfs[1][1] ? tfs[1][1].dir : null, '1M': tfs[2][1] ? tfs[2][1].dir : null },
+        spotNet24h: spotNet, futuresNet24h: futNet, fundingRate: funding, dailyVolumeRatio: volRatio,
+        bullVotes: bull, bearVotes: bear, alignment: align, conclusion: conclusion,
+        priceAtIssue: plan.price, computedAt: new Date().toISOString(),
+      };
+      trendSnapshots[planKey(plan)] = snapshot;
+      var html = tfs.map(function (t) {
+        if (!t[1]) return '<div class="trend-row"><span class="tf">' + t[0] + '</span><span class="pill">数据不足</span><span class="tb">已收盘 K 线不足 30 根，不给方向</span></div>';
+        var cls = t[1].dir === '多头' ? 'long' : t[1].dir === '空头' ? 'short' : 'flat';
+        return '<div class="trend-row"><span class="tf">' + t[0] + '</span><span class="badge ' + cls + '">' + t[1].dir + '</span><span class="tb">' + esc(t[1].basis) + '</span></div>';
+      }).join('');
+      html += '<div class="trend-ind">现货 24H 净流入 <b>' + fmtSignedUsd(spotNet) + '</b> · 合约 24H 净流入 <b>' + fmtSignedUsd(futNet) + '</b> · 资金费率 <b>' +
+        (funding === null ? '—' : (funding * 100).toFixed(3) + '%') + '</b> · 日线量能比 <b>' + (volRatio === null ? '—' : volRatio.toFixed(2) + '×') + '</b></div>';
+      html += '<div class="trend-ind">三周期对齐：<b>' + esc(align) + '</b> · 计票 多头 <b>' + bull + '</b> / 空头 <b>' + bear + '</b></div>';
+      html += '<div class="trend-concl">综合（机械合成）：<b>' + esc(conclusion) + '</b></div>';
+      html += '<p class="plan-meta">口径：方向 = 收盘对 MA20 + 近 5 根高低点结构；净流入为 taker 口径 24H 合计；资金费率拥挤阈值 ±0.05%。本块纯展示，不回写评分。</p>';
+      box.innerHTML = html;
+      maybeArchiveAdvice(plan, snapshot);
+    });
+  }
+
+  /* ---------------- 建议留档（服务端只增账本，冻结不改） ----------------
+   * 发行时点 = 精选带/可执行计划的详情页算出趋势与综合结论之时。
+   * 客户端按 planKey 去重（localStorage），服务端再按 plan_key 唯一约束去重；
+   * 服务端未就绪/失败时静默，不标记已留，下次打开详情重试。 */
+  function bandTopKeySet() {
+    var set = {};
+    if (!S.selection || !S.selection.plans) return set;
+    var now = Date.now();
+    var plans = S.selection.plans;
+    var ordered = orderPlans(plans.filter(function (p) { return VX.opportunityView(p, now).actionable; }))
+      .concat(orderPlans(plans.filter(function (p) { return !VX.opportunityView(p, now).actionable; })));
+    ordered.slice(0, 6).forEach(function (p) { set[planKey(p)] = 1; });
+    return set;
+  }
+  function maybeArchiveAdvice(plan, snapshot) {
+    try {
+      var key = planKey(plan);
+      var view = VX.opportunityView(plan, Date.now());
+      if (!view.actionable && !bandTopKeySet()[key]) return;
+      var logged = [];
+      try { logged = JSON.parse(localStorage.getItem('vx_advice_logged') || '[]'); } catch (e) { logged = []; }
+      if (logged.indexOf(key) >= 0) return;
+      apiFetch('/api/advice', {
+        method: 'POST',
+        body: {
+          planKey: key, symbol: plan.symbol, horizon: plan.horizon, direction: plan.direction,
+          actionable: view.actionable ? 1 : 0, score: plan.score, modelScore: plan.modelScore,
+          priceAtIssue: plan.price, entryLow: plan.entryLow, entryHigh: plan.entryHigh,
+          confirmationPrice: plan.confirmationPrice, stopLoss: plan.stopLoss, tp1: plan.tp1, tp2: plan.tp2,
+          invalidation: plan.invalidation, validUntil: plan.validUntil, planClosedAt: plan.closedAt,
+          indicators: snapshot, conclusion: snapshot.conclusion,
+        },
+      }).then(function (res) {
+        if (res && (res.archived || res.duplicate)) {
+          logged.push(key);
+          try { localStorage.setItem('vx_advice_logged', JSON.stringify(logged.slice(-200))); } catch (e) { /* 忽略 */ }
+        }
+      }).catch(function () { /* 静默：下次打开详情再试 */ });
+    } catch (e) { /* 留档失败不影响展示 */ }
   }
 
   function renderScanProgress() {
@@ -2141,6 +2353,173 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     });
     if (S.scans['1d'] && !S.scans['12h'] && S.scanRunning) parts.push('日线完成，正在核验 12 小时');
     el.innerHTML = '扫描中：' + (parts.join(' · ') || '准备中') + '。数据全部来自币安公开接口实时计算。';
+  }
+
+  /* ---------------- 大盘速览 · 币股（腾讯美股，逐个实测有数据才渲染） ----------------
+   * 代码 usMSTR/usCOIN/usCRCL/usHOOD 于 2026-11-27 逐个实测 qt.gtimg.cn 返回真实报价
+   * （字段口径同指数：[3] 现价 · [32] 涨跌% · [30] 时间，纽约时区）。
+   * 任一代码取不到/解析不出真实价格 → 该砖静默不渲染，绝不留假价或占位。 */
+  var STOCK_DEFS = [
+    { q: 'usMSTR', code: 'MSTR', name: '微策略' },
+    { q: 'usCOIN', code: 'COIN', name: 'Coinbase' },
+    { q: 'usCRCL', code: 'CRCL', name: 'Circle' },
+    { q: 'usHOOD', code: 'HOOD', name: 'Robinhood' },
+  ];
+  var todayStocksCache = undefined; /* undefined=未拉 · null=拉取中 · 数组=结果（可为空） */
+  function renderTodayStocks(box) {
+    if (!todayStocksCache || !todayStocksCache.length) { box.innerHTML = ''; box.style.display = 'none'; return; }
+    box.style.display = '';
+    box.innerHTML = todayStocksCache.map(function (it) {
+      var q = it.quote;
+      return '<div class="blk pulse-blk snap-blk"><div class="sym"><span class="sym-l"><b>' + esc(it.def.code) + '</b></span><span>' + esc(it.def.name) + ' · 美股</span></div>' +
+        '<div class="p">' + fmtPrice(q.value) + '</div>' +
+        '<div class="c ' + (q.change !== null && q.change >= 0 ? 'v-up' : 'v-down') + '">' + (q.change === null ? '—' : fmtChange(q.change)) + '</div></div>';
+    }).join('');
+  }
+  function loadTodayStocks() {
+    var box = document.getElementById('today-stocks');
+    if (!box) return;
+    if (todayStocksCache !== undefined) { renderTodayStocks(box); return; }
+    todayStocksCache = null;
+    tencentQuotes(STOCK_DEFS.map(function (d) { return d.q; })).then(function (quotes) {
+      var out = [];
+      STOCK_DEFS.forEach(function (d) {
+        var f = quotes[d.q];
+        if (!f) return;
+        var parsed = parseTencentQuote({ q: d.q, name: d.name, zone: 'America/New_York' }, f);
+        if (parsed) out.push({ def: d, quote: parsed });
+      });
+      todayStocksCache = out;
+      var box2 = document.getElementById('today-stocks');
+      if (box2 && S.route === 'today') renderTodayStocks(box2);
+    });
+  }
+
+  /* ---------------- 市场证据补格：24H 爆仓（会话观察） + 未平仓合约（币安样本） ---------------- */
+  function todayLiqCellHtml() {
+    return '<div class="blk stat-blk"><span class="k">24H 爆仓</span><span class="v" id="today-liq-v">…</span><span class="s" id="today-liq-s">正在连接爆仓事件流</span></div>';
+  }
+  function updateTodayLiq() {
+    var v = document.getElementById('today-liq-v'), s = document.getElementById('today-liq-s');
+    if (!v || !s) return;
+    var liq = S.liq;
+    if (liq.status === 'failed') { v.textContent = '—'; s.textContent = '暂无可靠数据源'; return; }
+    if (liq.status !== 'open') { v.textContent = '…'; s.textContent = '正在连接爆仓事件流'; return; }
+    var now = Date.now(), total = 0, n = 0;
+    liq.events.forEach(function (e) { if (now - e.t < 86400000) { total += e.usd; n++; } });
+    var coveredMin = Math.max(0, Math.round((now - (liq.startedAt || now)) / 60000));
+    v.textContent = n ? fmtUsd(total) : '—';
+    s.textContent = '本页会话观察 ' + n + ' 条 · 覆盖约 ' + coveredMin + ' 分钟 · 非全市场总额';
+  }
+  function todayOiCellHtml() {
+    return '<div class="blk stat-blk"><span class="k">未平仓合约</span><span class="v" id="today-oi-v">…</span><span class="s" id="today-oi-s">币安合约 · 主流样本统计中</span></div>';
+  }
+  var todayOiCache = undefined; /* undefined=未拉 · null=拉取中/失败 · 对象=结果 */
+  function renderTodayOi() {
+    var v = document.getElementById('today-oi-v'), s = document.getElementById('today-oi-s');
+    if (!v || !s) return;
+    if (todayOiCache === undefined) return;
+    if (!todayOiCache) { v.textContent = '—'; s.textContent = '数据缺失'; return; }
+    v.textContent = fmtUsd(todayOiCache.total);
+    s.textContent = '24H ' + (todayOiCache.change === null ? '—' : fmtChange(todayOiCache.change)) + ' · 币安合约主流 ' + todayOiCache.n + ' 币样本';
+  }
+  function loadTodayOi() {
+    if (!document.getElementById('today-oi-v')) return;
+    if (todayOiCache !== undefined) { renderTodayOi(); return; }
+    todayOiCache = null;
+    var rows = [];
+    try { rows = S.futuresTicker ? VX.parseTickerRows(S.futuresTicker.payload) : []; } catch (e) { rows = []; }
+    var pairs = rows.filter(function (r) { return /USDT$/.test(r.symbol) && r.quoteVolume24h > 0; })
+      .sort(function (a, b) { return b.quoteVolume24h - a.quoteVolume24h; })
+      .slice(0, 12).map(function (r) { return r.symbol; });
+    if (!pairs.length) { renderTodayOi(); return; }
+    Promise.all(pairs.map(function (pair) {
+      return VX.firstOfficialJson(
+        VX.FUTURES_HOSTS.map(function (h) { return h + '/futures/data/openInterestHist?symbol=' + pair + '&period=1h&limit=25'; }),
+        function (val) { return Array.isArray(val) && val.length >= 2; }, 7000)
+        .then(function (res) {
+          if (!res) return null;
+          var list = res.payload.slice().sort(function (a, b) { return a.timestamp - b.timestamp; });
+          var last = VX.finiteNumber(list[list.length - 1].sumOpenInterestValue);
+          var first = VX.finiteNumber(list[0].sumOpenInterestValue);
+          var spanH = (list[list.length - 1].timestamp - list[0].timestamp) / 3600000;
+          if (last === null || last <= 0) return null;
+          return { last: last, first: (first !== null && first > 0 && spanH >= 20) ? first : null };
+        });
+    })).then(function (parts) {
+      var ok = parts.filter(Boolean);
+      if (!ok.length) { todayOiCache = null; renderTodayOi(); return; }
+      var total = ok.reduce(function (s2, p) { return s2 + p.last; }, 0);
+      var both = ok.filter(function (p) { return p.first !== null; });
+      var change = null;
+      if (both.length >= 8) {
+        var oldTotal = both.reduce(function (s2, p) { return s2 + p.first; }, 0);
+        var newTotal = both.reduce(function (s2, p) { return s2 + p.last; }, 0);
+        if (oldTotal > 0) change = (newTotal / oldTotal - 1) * 100;
+      }
+      todayOiCache = { total: total, change: change, n: ok.length };
+      renderTodayOi();
+    });
+  }
+  /* 今日页底唯一折叠：口径与数据来源全文（与「我的」页折叠同文） */
+  var METHOD_FOLD_HTML =
+    '<p>定调口径：今日定调看币安 USDT 现货全市场 24 小时涨跌宽度：上涨占比 ≥ 58% 且 BTC、ETH 同向上涨 → 适合做多；≤ 42% 且同向下跌 → 适合做空；BTC 24H 波动达 ±6%，或上涨占比 ≤ 15% / ≥ 85% → 极端风险（风险总闸）。其余为震荡。定调与单币计划（日线 / 12 小时收盘结构）周期不同，方向可以不一致，页面会给出示。</p>' +
+    '<p>扫描池：市值前 50 非稳定币（CoinGecko → CoinLore → CoinPaprika 三源依次回退）。市值源全部不可用时，静态版回退为币安 24H 成交额前 50，并在页面明确标注「成交额排序」。</p>' +
+    '<p>数据从哪来：行情全部由你的浏览器直连公开接口，本站没有服务器代取：币安现货与 U 本位合约官方 REST（多主机依次回退，K 线预算 2200ms、行情 1800ms）；市值排名 CoinGecko / CoinLore / CoinPaprika；恐惧贪婪指数 Alternative.me；BTC 市占率 CoinGecko / CoinPaprika 全球数据。每个数字都带抓取时间；页面显示的时间为北京时间。例外只有两项：账号与 AI 追踪账本读服务端版接口，因为这两项本来就只存在于服务端。</p>' +
+    '<p>全球指数与币股来自腾讯行情公开接口（指数与美股报价、日线收盘历史）；A 股 / 美股价格温度为本站模型，用上证指数与标普500的日线收盘在本页内计算。爆仓没有公开的历史汇总接口：本页用币安合约爆仓事件流在打开期间实时观察并标注样本口径，连不上时显示暂无可靠数据源。未平仓合约为币安合约主流 12 币样本的 openInterestHist 合计，非全市场总额。</p>' +
+    '<p>趋势分析口径（机会详情页，纯展示、不进评分）：每周期只用已收盘 K 线（币安现货 1d / 1w / 1M）；方向票 = 收盘相对 MA20（上 +1 / 下 −1）+ 近 5 根与前 5 根高低点结构（高低点双抬高 +1 / 双降低 −1 / 其余 0），合计 ≥ +1 为多头、≤ −1 为空头、0 为震荡；已收盘不足 30 根记数据不足。综合计票 = 三周期方向 + 现货与合约 24H 净流入（taker 口径，流入为正记多头票）+ 资金费率（> +0.05% 记空头票，多头拥挤；< −0.05% 记多头票）+ 日线量能比（≥ 1 时跟随日线方向记一票）。精选与可执行计划的建议在发行时连同指标快照冻结写入服务端留档，只增不改，供事后核对。</p>';
+
+  /* ---------------- 首页 AI追踪精选 ---------------- */
+  function roundStance(round) {
+    if (round.stage === 'watch') return { label: '观察', cls: 'flat' };
+    var dir = round.direction || (round.monitor === 'risk_short' ? 'short' : 'long');
+    return dir === 'short' ? { label: '做空', cls: 'short' } : { label: '做多', cls: 'long' };
+  }
+  function openBoardRounds() {
+    if (!S.tracking || !S.tracking.board) return [];
+    var rows = [], seen = {};
+    function push(r) { var k = r.round_id || (r.symbol + '|' + r.entry_at); if (seen[k]) return; seen[k] = 1; rows.push(r); }
+    (S.tracking.board.monitors || []).forEach(function (m) { (m.rows || []).forEach(push); });
+    (S.tracking.board.watch || []).forEach(push);
+    rows.sort(function (a, b) { return (Date.parse(b.entry_at) || 0) - (Date.parse(a.entry_at) || 0); });
+    return rows;
+  }
+  function trackingTileHtml(round) {
+    var stance = roundStance(round);
+    var ret = round.currentReturnPct;
+    var retHtml = ret == null || !Number.isFinite(ret) ? '—' : '<span class="' + (ret >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(ret) + '</span>';
+    var entryTs = Date.parse(round.entry_at);
+    var dur = fmtDuration(entryTs, Date.now());
+    return '<div class="blk tap" onclick="window.__vxGo(\'signals\')"><div class="round-head">' + coinLogoHtml(round.symbol, '') +
+      '<span class="sym">' + esc(round.symbol) + '</span>' +
+      '<span class="badge ' + stance.cls + '">' + stance.label + '</span>' +
+      '<span class="pill">' + esc(MONITOR_SHORT[round.monitor] || round.monitor) + (round.stage === 'watch' ? ' · 观察期' : '') + '</span></div>' +
+      '<div class="round-prices">入场 <b>' + fmtPrice(round.entry_price) + '</b> → 现价 <b>' + fmtPrice(round.last_price) + '</b> · ' + retHtml + '</div>' +
+      '<div class="track-time">上榜 <b>' + fmtDayTime(entryTs) + '</b>（北京时间）' + (dur ? ' · 已跟踪 ' + dur : '') + '</div></div>';
+  }
+  function todayTrackingSection() {
+    if (S.tracking === null) return '';
+    var head = '<div class="zhead"><h2>AI追踪</h2><span class="en">AI Tracking</span><span class="right">观察中 · 点开看完整账本</span></div>';
+    if (S.tracking === undefined) return head + '<div class="blk"><p class="progress-line">正在读取服务端追踪账本…</p></div>';
+    var rounds = openBoardRounds();
+    if (!rounds.length) return '';
+    return head + rounds.slice(0, 3).map(trackingTileHtml).join('');
+  }
+  /* 追踪账本拉取（今日页精选与机会页板块共用一份） */
+  function ensureTracking() {
+    if (S.tracking !== undefined || S.trackingLoading) return;
+    S.trackingLoading = true;
+    Promise.all([apiFetch('/api/tracking'), apiFetch('/api/tracking/history?limit=20')]).then(function (r) {
+      S.tracking = { board: r[0], history: r[1] };
+      var u = document.getElementById('tracking-updated');
+      if (u) u.textContent = '服务端账本 · ' + fmtClock(Date.now()) + ' 更新';
+    }).catch(function () {
+      S.tracking = null;
+    }).then(function () {
+      S.trackingLoading = false;
+      if (S.route === 'signals') renderTracking();
+      if (S.route === 'today') renderToday();
+    });
   }
 
   function renderToday() {
@@ -2186,7 +2565,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         '<p style="margin:8px 0 0;font-size:13px;color:var(--text-secondary)">' + esc(ov.risk.detail) + '</p></div>';
     }
 
-    /* 证据层（统计块与脉搏）先攒到 evidenceHtml，排在机会区之后 */
+    /* 市场证据统计块先攒到 evidenceHtml（只有统计块，币价砖在「市值前6」带） */
     var evidenceHtml = '';
     var btcA = ov.assets.find(function (a) { return a.symbol === 'BTC'; });
     var ethA = ov.assets.find(function (a) { return a.symbol === 'ETH'; });
@@ -2196,28 +2575,34 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       '<div class="blk stat-blk tap" onclick="window.__vxGo(\'market\')"><span class="k">市场宽度</span><span class="v">' + ov.breadth.upRatio.toFixed(1) + '%</span><span class="s">上涨 ' + ov.breadth.up + ' / ' + (ov.breadth.up + ov.breadth.down + ov.breadth.unchanged) + ' 个现货对</span></div>' +
       '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'BTC\')"><span class="k k-logo">' + coinLogoHtml('BTC', 'sm') + 'BTC 趋势</span><span class="v ' + trendClass(btcA) + '">' + trendWord(btcA) + '</span><span class="s">24H ' + (btcA ? fmtChange(btcA.change24h) : '数据缺失') + '</span></div>' +
       '<div class="blk stat-blk tap" onclick="window.__vxCoin(\'ETH\')"><span class="k k-logo">' + coinLogoHtml('ETH', 'sm') + 'ETH 趋势</span><span class="v ' + trendClass(ethA) + '">' + trendWord(ethA) + '</span><span class="s">24H ' + (ethA ? fmtChange(ethA.change24h) : '数据缺失') + '</span></div>' +
-      '<div class="blk stat-blk tap" onclick="window.__vxGo(\'market\')"><span class="k">恐惧贪婪</span><span class="v v-accent">' + (ov.fearGreed === null ? '—' : ov.fearGreed) + '</span><span class="s">' + (ov.fearGreed === null ? '数据缺失' : esc(ov.fearGreedLabel || VX.fearGreedBand(ov.fearGreed))) + '</span></div></div>';
+      '<div class="blk stat-blk tap" onclick="window.__vxGo(\'market\')"><span class="k">恐惧贪婪</span><span class="v v-accent">' + (ov.fearGreed === null ? '—' : ov.fearGreed) + '</span><span class="s">' + (ov.fearGreed === null ? '数据缺失' : esc(ov.fearGreedLabel || VX.fearGreedBand(ov.fearGreed))) + '</span></div>' + todayLiqCellHtml() + todayOiCellHtml() + '</div>';
 
-    /* 脉搏：6 个独立行情块 + 3 个独立统计块 */
+    /* 市值前6：6 砖 3 个一排 × 2 排成一带（logo/代码、24H 成交额、价格、涨跌），
+     * 其下接币股大砖 2 个一排（异步补入 #today-stocks；取不到的币股不渲染）。 */
     var pulseSymbols = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE'];
     var spotRows = S.webProducts ? S.webProducts.payload : (S.spotTicker ? VX.parseTickerRows(S.spotTicker.payload) : []);
     var bySymbol = new Map(spotRows.map(function (r) { return [r.symbol, r]; }));
-    evidenceHtml += '<div class="grid grid-3">' + pulseSymbols.map(function (sym) {
+    var snapshotHtml = '<div class="grid grid-3">' + pulseSymbols.map(function (sym) {
       var r = bySymbol.get(sym + 'USDT');
       if (!r) return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><span class="sym-l">' + coinLogoHtml(sym, 'sm') + '<b>' + sym + '</b></span></div><div class="p">—</div><div class="c" style="color:var(--weak)">行情待同步</div></div>';
       return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><span class="sym-l">' + coinLogoHtml(sym, 'sm') + '<b>' + sym + '</b></span><span>' + fmtUsd(r.quoteVolume24h) + '</span></div>' +
         '<div class="p">' + fmtPrice(r.price) + '</div>' +
         '<div class="c ' + (r.change24h >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(r.change24h) + '</div></div>';
-    }).join('') + '</div>';
+    }).join('') + '</div><div class="grid grid-2" id="today-stocks" style="margin-top:14px"></div>';
     var dv = ov.derivatives;
     evidenceHtml += '<div class="grid grid-3">' +
       '<div class="blk stat-blk"><span class="k">BTC 市占率</span><span class="v">' + (ov.btcDominance === null ? '—' : ov.btcDominance.toFixed(1) + '%') + '</span><span class="s">全市场口径</span></div>' +
       '<div class="blk stat-blk"><span class="k">BTC 资金费率</span><span class="v">' + (dv.btcFundingRate === null ? '—' : (dv.btcFundingRate * 100).toFixed(3) + '%') + '</span><span class="s">' + (dv.btcFundingSource ? esc(dv.btcFundingSource) : '数据缺失') + '</span></div>' +
       '<div class="blk stat-blk"><span class="k">BTC 多空比</span><span class="v">' + (dv.btcLongShortRatio === null ? '—' : dv.btcLongShortRatio.toFixed(2)) + '</span><span class="s">账户口径 · 1H</span></div></div>';
 
-    /* 机会区 */
-    html += '<div class="zhead"><h2>交易机会</h2><span class="en">Opportunities</span><span class="count">' + (S.selection ? actCount : '…') + '</span>' +
-      '<span class="right"><button class="refresh-btn" onclick="window.__vxRescan()"' + (S.scanRunning ? ' disabled' : '') + '>重新扫描</button></span></div>';
+    /* 最终版面顺序（用户定）：定调 → 市场证据 → 交易机会 → 市值前6 → AI追踪 → 其他机会币 → 口径折叠 */
+    html += '<div class="zhead"><h2>市场证据</h2><span class="en">Evidence</span><span class="right">实时统计</span></div>' + evidenceHtml;
+
+    /* 精选机会带：可执行优先（组内前 6 币优先、再按评分），其次高分，最多 6 砖 */
+    html += '<div class="zhead"><h2>精选机会</h2><span class="en">Top Picks</span><span class="count">' + (S.selection ? actCount : '…') + '</span>' +
+      '<span class="right"><button class="refresh-btn" onclick="window.__vxRescan()"' + (S.scanRunning ? ' disabled' : '') + '>重新扫描</button></span></div>' +
+      '<p class="foot-note" style="margin:0 2px 10px">可执行与高分优先的一带 · 点开看完整计划与多周期趋势分析</p>';
+    var bandRest = [];
     if (!S.selection) {
       html += '<div class="blk"><p class="progress-line" id="scan-progress">扫描中：准备中。数据全部来自币安公开接口实时计算。</p></div>';
     } else {
@@ -2230,13 +2615,39 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         html += '<div class="blk empty-blk"><div class="big">' + (S.selection.failed ? '本轮扫描未完成' : '今天没有通过门槛的机会') + '</div>' +
           '<p>' + (S.selection.failed ? '数据未完成核验，不能据此判断没有机会。' : '日线与 12 小时都没有计划通过全部门槛。没有就不列，不凑数——这是提醒软件的规矩。') + '</p></div>';
       } else {
-        html += '<div class="grid grid-3">' + plans.map(function (p) { return planTile(p, now); }).join('') + '</div>';
+        var actionableFirst = orderPlans(plans.filter(function (p) { return VX.opportunityView(p, now).actionable; }))
+          .concat(orderPlans(plans.filter(function (p) { return !VX.opportunityView(p, now).actionable; })));
+        var bandTop = actionableFirst.slice(0, 6);
+        var shownKeys = {};
+        bandTop.forEach(function (p) { shownKeys[planKey(p)] = 1; });
+        bandRest = plans.filter(function (p) { return !shownKeys[planKey(p)]; })
+          .sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
+        html += '<div class="grid grid-3">' + bandTop.map(function (p) { return planTile(p, now); }).join('') + '</div>';
+        if (!bandRest.length) html += '<p class="foot-note" style="text-align:right"><a href="#/signals">查看全部机会 →</a></p>';
       }
     }
 
-    /* 证据层排在机会之后：先定调、再机会、最后才是佐证 */
-    html += '<div class="zhead"><h2>市场证据</h2><span class="en">Evidence</span><span class="right">佐证层 · 不占决策面</span></div>' + evidenceHtml;
+    /* 市值前6：6 砖一带 + 币股 2 个一排 */
+    html += '<div class="zhead"><h2>市值前6</h2><span class="en">Top 6</span><span class="right">成交额 / 市值前 6 + 大币股</span></div>' + snapshotHtml;
+
+    /* AI追踪精选：进行中的观察轮次最多 3 条，各自成块，上榜时间写在块上 */
+    html += todayTrackingSection();
+
+    /* 其他扫描机会：精选带之外的砖，按评分从高到低，与上一带不重复 */
+    if (bandRest.length) {
+      html += '<div class="zhead"><h2>其他扫描机会</h2><span class="en">More From Scan</span><span class="right">' + bandRest.length + ' 条</span></div>' +
+        '<div class="grid grid-3">' + bandRest.map(function (p) { return planTile(p, now); }).join('') + '</div>' +
+        '<p class="foot-note" style="text-align:right"><a href="#/signals">查看全部机会 →</a></p>';
+    }
+
+    /* 页底唯一折叠：口径与数据来源（今日页不留常显长文） */
+    html += '<details class="fold blk" style="margin-top:14px"><summary>口径与数据来源</summary><div class="fold-body">' + METHOD_FOLD_HTML + '</div></details>';
     root.innerHTML = html;
+    loadTodayStocks();
+    ensureTracking();
+    startLiquidations();
+    updateTodayLiq();
+    loadTodayOi();
     if (S.route === 'coin') updateCoinPlanSection();
     if (S.route === 'plan') renderPlanDetail();
   }
@@ -2266,7 +2677,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
         '<p class="plan-meta">池口径：' + esc(d.poolLabel || '') + ' · 缺 K 线 ' + (d.missingKlines || 0) + ' · 缺资金费率 ' + (d.missingFunding || 0) +
         ' · 历史不足 ' + (d.insufficientHistory || 0) + ' · 周期未通过 ' + ((d.invalidHistory || 0) + (d.staleHistory || 0)) +
         ' · 合约 ' + (d.futures || 0) + ' / 现货 ' + (d.spot || 0) + ' · 抓取 ' + fmtClock(Date.parse(env.fetchedAt)) + '</p></div>';
-      var plans = Array.isArray(env.data) ? env.data : [];
+      var plans = orderPlans(Array.isArray(env.data) ? env.data : []);
       if (!plans.length) {
         html += '<div class="blk empty-blk"><div class="big">本周期没有可展示的候选</div><p>通过数据完整性校验的计划为 0，或评分全部低于 60 分展示线。原因见上方扫描说明。</p></div>';
       } else {
@@ -2553,6 +2964,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     };
   }
   function renderLiq() {
+    updateTodayLiq();
     var box = document.getElementById('mkt-liq');
     if (!box) return;
     var note = document.getElementById('mkt-liq-note');
@@ -2613,6 +3025,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     { name: '带带带比特', handle: 'daidaibtc', focus: 'BTC · 行情复盘' },
     { name: '孙宇晨', handle: 'justinsuntron', focus: 'TRON · 行业动态' },
     { name: 'Donald Trump · 特朗普', handle: 'realDonaldTrump', focus: '美国政策 · Crypto' },
+    { name: '熬鹰', handle: 'thankUcrypto', focus: '合约实盘 · 带单交易' },
   ];
   var CURATED_X_HANDLES = [
     'coolish', 'PeterLBrandt', '_1woonomic', 'CryptoDonAlt', 'CryptoCred',
@@ -2664,7 +3077,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     var plans = coinPlansFor(symbol);
     var html = '<div class="zhead"><h2>本轮扫描评估</h2><span class="en">Scan</span></div>';
     if (plans.length) {
-      html += '<div class="grid grid-3">' + plans.map(function (p) { return planTile(p, Date.now()); }).join('') + '</div>';
+      html += '<div class="grid grid-3">' + orderPlans(plans).map(function (p) { return planTile(p, Date.now()); }).join('') + '</div>';
     } else if (!S.selection) {
       html += '<div class="blk"><p class="progress-line">本轮扫描尚未完成，完成后这里显示 ' + esc(symbol) + ' 的评估结果（评分与被拦原因）。</p>' +
         '<p style="margin-top:10px"><button class="refresh-btn" onclick="window.__vxGo(\'signals\')">去机会页看扫描进度</button></p></div>';
@@ -2837,12 +3250,12 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     return html;
   }
   /* ---------------- 币种详情 · 标签页 ----------------
-   * 概览 / 现货资金 / 合约资金 / 主力成本 / 链上地址 / 代币流向 / AI追踪。
+   * 概览 / 现货资金 / 合约资金 / 主力成本 / 代币流向 / AI追踪。
    * 结构对齐参考产品 ValueScan 的币种页；数据全部浏览器直连公开接口现算，
    * 拿不到的标签如实说明，不造数（口径见各页折叠与调研文件）。 */
   var COIN_TABS = [
     ['overview', '概览'], ['spot', '现货资金'], ['futures', '合约资金'],
-    ['cost', '主力成本'], ['chain', '链上地址'], ['tokenflow', '代币流向'], ['ai', 'AI追踪'],
+    ['cost', '主力成本'], ['tokenflow', '代币流向'], ['ai', 'AI追踪'],
   ];
   function renderCoinShell() {
     var root = document.getElementById('coin-root');
@@ -2874,8 +3287,6 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     } else if (tab === 'cost') {
       body.innerHTML = costTabHtml(symbol);
       ensureCost(symbol);
-    } else if (tab === 'chain') {
-      body.innerHTML = chainTabHtml(symbol);
     } else if (tab === 'tokenflow') {
       body.innerHTML = tokenFlowHtml(symbol);
       ensureTokenFlow(symbol);
@@ -3526,13 +3937,8 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     return html;
   }
 
-  /* ---------------- 链上地址（静态版不可用，如实说明） ---------------- */
-  function chainTabHtml(symbol) {
-    return '<div class="zhead"><h2>链上地址</h2><span class="en">On-chain Holders</span></div>' +
-      '<div class="blk empty-blk"><div class="big">静态版暂无此数据</div>' +
-      '<p>持币地址分布（筹码集中度）需要链上全量解析与地址标签数据，浏览器直连的免费公开接口提供不了：本次已逐项核查——CoinMetrics 社区版的地址余额分档指标对免费层返回 403，Blockchair、mempool.space 均无持仓分布或富豪榜公开接口。</p>' +
-      '<p>参考产品 ValueScan 的这一页来自其链上数据服务。要上这一页，需要接入链上数据服务商（服务端），静态版不拿别的数据冒充。接入后这里会显示持币地址数与各余额档位的地址分布。</p></div>';
-  }
+  /* 持币分布标签已按用户裁定整体移除：无免费带标签钱包数据源，
+   * 不留空占位与说明文字；日后服务端接入链上数据商再带真实数据回归。 */
 
   /* ---------------- 代币流向（CoinMetrics 交易所流，仅 BTC/ETH） ---------------- */
   var CM_FLOW_ASSETS = { BTC: 'btc', ETH: 'eth' };
@@ -3864,11 +4270,16 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   function roundCard(round) {
     var ret = round.currentReturnPct;
     var retHtml = ret == null || !Number.isFinite(ret) ? '—' : '<span class="' + (ret >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(ret) + '</span>';
+    var stance = roundStance(round);
+    var entryTs = Date.parse(round.entry_at);
+    var dur = fmtDuration(entryTs, Date.now());
     return '<div class="blk"><div class="round-head">' + coinLogoHtml(round.symbol, '') + '<span class="sym">' + esc(round.symbol) + '</span>' +
       '<span class="badge ' + (round.direction === 'short' ? 'short' : 'long') + '">' + esc(MONITOR_SHORT[round.monitor] || round.monitor) + '</span>' +
+      '<span class="badge ' + stance.cls + '">' + stance.label + '</span>' +
       '<span class="pill">' + (round.stage === 'watch' ? '观察期' : round.live ? '正式轮次' : '观察轮次') + '</span></div>' +
       '<div class="round-prices">推送价 <b>' + fmtPrice(round.entry_price) + '</b> · 现价 <b>' + fmtPrice(round.last_price) + '</b> · 推送后 ' + retHtml +
-      (round.ai_score != null ? ' · AI评分 <b>' + esc(round.ai_score) + '</b>' : '') + ' · 推送 ' + fmtTime(Date.parse(round.entry_at)) + '</div>' +
+      (round.ai_score != null ? ' · AI评分 <b>' + esc(round.ai_score) + '</b>' : '') + '</div>' +
+      '<div class="track-time">上榜 <b>' + fmtDayTime(entryTs) + '</b>（北京时间）' + (dur ? ' · 已跟踪 ' + dur : '') + '</div>' +
       adviceHtml(round.advice) + '</div>';
   }
   function trackingBoardHtml(data) {
@@ -3901,7 +4312,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
       var ret = r.close_return_pct;
       return '<div class="hist-line"><span class="sym">' + esc(r.symbol) + '</span><span class="dim">' + esc(MONITOR_SHORT[r.monitor] || r.monitor) + '</span>' +
         '<span class="dim">入 ' + fmtPrice(r.entry_price) + ' → 出 ' + fmtPrice(r.close_price) + '</span>' +
-        '<span class="dim">' + esc(CLOSE_LABEL[r.status] || r.status) + ' · ' + fmtTime(Date.parse(r.closed_at)) + '</span>' +
+        '<span class="dim">上榜 ' + fmtDayTime(Date.parse(r.entry_at)) + ' · 下榜 ' + fmtDayTime(Date.parse(r.closed_at)) + ' · ' + esc(CLOSE_LABEL[r.status] || r.status) + '</span>' +
         '<span class="r ' + (ret == null ? '' : ret >= 0 ? 'v-up' : 'v-down') + '">' + (ret == null ? '—' : fmtChange(ret)) + '</span></div>';
     }).join('') + '</div>';
     return html;
@@ -3911,15 +4322,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     if (!root) return;
     if (S.tracking === undefined) {
       root.innerHTML = '<div class="blk"><p class="progress-line">正在读取服务端追踪账本…</p></div>';
-      Promise.all([apiFetch('/api/tracking'), apiFetch('/api/tracking/history?limit=20')]).then(function (r) {
-        S.tracking = { board: r[0], history: r[1] };
-        var u = document.getElementById('tracking-updated');
-        if (u) u.textContent = '服务端账本 · ' + fmtClock(Date.now()) + ' 更新';
-        if (S.route === 'signals') renderTracking();
-      }).catch(function () {
-        S.tracking = null;
-        if (S.route === 'signals') renderTracking();
-      });
+      ensureTracking();
       return;
     }
     if (S.tracking === null) {
@@ -3931,6 +4334,73 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     root.innerHTML = trackingBoardHtml(S.tracking);
   }
   window.__vxTrackingRetry = function () { S.tracking = undefined; renderTracking(); };
+
+  /* ---------------- 建议留档视图（只读核对：发行后涨跌按方向计） ---------------- */
+  function renderAdvice() {
+    var root = document.getElementById('advice-root');
+    if (!root) return;
+    if (S.advice === undefined) {
+      root.innerHTML = '<div class="blk"><p class="progress-line">正在读取建议留档…</p></div>';
+      apiFetch('/api/advice?limit=50').then(function (body) {
+        S.advice = body && Array.isArray(body.records) ? body.records : [];
+        var u = document.getElementById('advice-updated');
+        if (u) u.textContent = '只增不改 · ' + fmtClock(Date.now()) + ' 更新';
+        if (S.route === 'signals') renderAdvice();
+      }).catch(function () {
+        S.advice = null;
+        if (S.route === 'signals') renderAdvice();
+      });
+      return;
+    }
+    if (S.advice === null) {
+      root.innerHTML = '<div class="blk empty-blk"><div class="big">留档账本暂不可达</div><p>建议留档在服务端，连不上时不显示任何记录，也不拿本地数据冒充。</p></div>';
+      return;
+    }
+    if (!S.advice.length) {
+      root.innerHTML = '<div class="blk empty-blk"><div class="big">尚无留档</div><p>精选与可执行计划在详情页算出有据建议时自动冻结写入，这里只读核对。</p></div>';
+      return;
+    }
+    root.innerHTML = '<div class="blk">' + S.advice.map(function (rec) {
+      return '<div class="hist-line"><span class="sym">' + esc(rec.symbol) + '</span>' +
+        '<span class="badge ' + (rec.direction === '做多' ? 'long' : rec.direction === '做空' ? 'short' : 'flat') + '">' + esc(rec.direction) + '</span>' +
+        '<span class="dim">' + (rec.horizon === '1d' ? '日线' : '12 小时') + ' · 评分 ' + (rec.score == null ? '—' : rec.score) + (rec.actionable ? ' · 可执行' : ' · 精选观察') + '</span>' +
+        '<span class="dim">发行 ' + fmtDayTime(Date.parse(rec.issuedAt)) + ' ' + fmtClock(Date.parse(rec.issuedAt)) + '</span>' +
+        '<span class="dim">发行价 ' + fmtPrice(rec.priceAtIssue) + (rec.confirmationPrice ? ' · 确认价 ' + fmtPrice(rec.confirmationPrice) : '') + '</span>' +
+        '<span class="dim advice-now" data-sym="' + esc(rec.symbol) + '" data-issue="' + rec.priceAtIssue + '" data-dir="' + esc(rec.direction) + '">现价 …</span>' +
+        '<span class="r advice-move">…</span></div>';
+    }).join('') + '</div>';
+    fillAdvicePrices();
+  }
+  function fillAdvicePrices() {
+    var nodes = document.querySelectorAll('.advice-now');
+    if (!nodes.length) return;
+    var symbols = [];
+    nodes.forEach(function (n) { var s = n.getAttribute('data-sym'); if (symbols.indexOf(s) < 0) symbols.push(s); });
+    Promise.all(symbols.map(function (sym) {
+      return fetchCoinJson(VX.SPOT_HOSTS, '/api/v3/ticker/price?symbol=' + sym + 'USDT', function (v) { return v && v.price; }, 6000)
+        .then(function (r) { return { sym: sym, price: r ? VX.finiteNumber(r.payload.price) : null }; })
+        .catch(function () { return { sym: sym, price: null }; });
+    })).then(function (results) {
+      var bySym = {};
+      results.forEach(function (r) { bySym[r.sym] = r.price; });
+      document.querySelectorAll('.advice-now').forEach(function (n) {
+        var sym = n.getAttribute('data-sym');
+        var cur = bySym[sym];
+        var issue = Number(n.getAttribute('data-issue'));
+        var dir = n.getAttribute('data-dir');
+        var line = n.parentElement;
+        var moveEl = line ? line.querySelector('.advice-move') : null;
+        if (cur === null || cur === undefined || !(issue > 0)) { n.textContent = '现价 —'; if (moveEl) moveEl.textContent = '—'; return; }
+        n.textContent = '现价 ' + fmtPrice(cur);
+        var raw = (cur / issue - 1) * 100;
+        var signed = dir === '做空' ? -raw : raw;
+        if (moveEl) {
+          moveEl.textContent = (dir === '观望' ? '涨跌 ' : '按方向 ') + fmtChange(signed);
+          moveEl.className = 'r advice-move ' + (signed >= 0 ? 'v-up' : 'v-down');
+        }
+      });
+    });
+  }
 
   window.__vxCoin = function (sym) {
     var target = '#/coin/' + sym;
@@ -3961,7 +4431,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     if (route === 'today' || route === 'signals') {
       loadCore().then(function () { renderToday(); });
       ensureScan();
-      if (route === 'signals') renderTracking();
+      if (route === 'signals') { renderTracking(); renderAdvice(); }
     } else if (route === 'market') {
       startMarket();
     } else if (route === 'voices') {
