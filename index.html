@@ -131,6 +131,7 @@ details.fold .fold-body p { margin: 4px 0; }
 .trend-row { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); }
 .trend-row:last-of-type { border-bottom: none; }
 .trend-row .tf { font-weight: 700; font-size: 13px; flex: none; width: 34px; }
+.trend-row .badge, .trend-row .pill { flex: none; white-space: nowrap; }
 .trend-row .tb { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
 .trend-ind { font-size: 12.5px; color: var(--text-secondary); margin-top: 9px; line-height: 1.6; }
 .trend-ind b { color: var(--text); }
@@ -605,6 +606,13 @@ img.pava { object-fit: cover; }
   <section class="view" id="view-coin">
     <div class="stack" id="coin-root">
       <div class="blk"><p class="progress-line">正在读取币种行情…</p></div>
+    </div>
+  </section>
+
+  <!-- ================= 币股详情 STOCK ================= -->
+  <section class="view" id="view-stock">
+    <div class="stack" id="stock-root">
+      <div class="blk"><p class="progress-line">正在读取币股行情…</p></div>
     </div>
   </section>
 
@@ -1926,6 +1934,7 @@ img.pava { object-fit: cover; }
     scanProgress: {}, scanStartedAt: null,
     marketStarted: false,
     coinSymbol: null, coinToken: 0,
+    stockCode: null, stockToken: 0,
     liq: { status: 'idle', startedAt: null, events: [], count: 0 },
   };
 
@@ -2488,7 +2497,7 @@ img.pava { object-fit: cover; }
     box.style.display = '';
     box.innerHTML = todayStocksCache.map(function (it) {
       var q = it.quote;
-      return '<div class="blk pulse-blk snap-blk"><div class="sym"><span class="sym-l"><b>' + esc(it.def.code) + '</b></span><span>' + esc(it.def.name) + ' · 美股</span></div>' +
+      return '<div class="blk pulse-blk tap" onclick="window.__vxStock(\'' + it.def.code + '\')"><div class="sym"><span class="sym-l"><b>' + esc(it.def.code) + '</b></span><span>' + esc(it.def.name) + ' · 美股</span></div>' +
         '<div class="p">' + fmtPrice(q.value) + '</div>' +
         '<div class="c ' + (q.change !== null && q.change >= 0 ? 'v-up' : 'v-down') + '">' + (q.change === null ? '—' : fmtChange(q.change)) + '</div></div>';
     }).join('');
@@ -2695,7 +2704,7 @@ img.pava { object-fit: cover; }
       '<div class="blk stat-blk tap" onclick="window.__vxGo(\'market\')"><span class="k">恐惧贪婪</span><span class="v v-accent">' + (ov.fearGreed === null ? '—' : ov.fearGreed) + '</span><span class="s">' + (ov.fearGreed === null ? '数据缺失' : esc(ov.fearGreedLabel || VX.fearGreedBand(ov.fearGreed))) + '</span></div>' + todayLiqCellHtml() + todayOiCellHtml() + '</div>';
 
     /* 市值前6：6 砖 3 个一排 × 2 排成一带（logo/代码、24H 成交额、价格、涨跌），
-     * 其下接币股大砖 2 个一排（异步补入 #today-stocks；取不到的币股不渲染）。 */
+     * 其下接币股砖同为 3 个一排、同规格（异步补入 #today-stocks；取不到的币股不渲染）。 */
     var pulseSymbols = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE'];
     var spotRows = S.webProducts ? S.webProducts.payload : (S.spotTicker ? VX.parseTickerRows(S.spotTicker.payload) : []);
     var bySymbol = new Map(spotRows.map(function (r) { return [r.symbol, r]; }));
@@ -2705,7 +2714,7 @@ img.pava { object-fit: cover; }
       return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + sym + '\')"><div class="sym"><span class="sym-l">' + coinLogoHtml(sym, 'sm') + '<b>' + sym + '</b></span><span>' + fmtUsd(r.quoteVolume24h) + '</span></div>' +
         '<div class="p">' + fmtPrice(r.price) + '</div>' +
         '<div class="c ' + (r.change24h >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(r.change24h) + '</div></div>';
-    }).join('') + '</div><div class="grid grid-2" id="today-stocks" style="margin-top:14px"></div>';
+    }).join('') + '</div><div class="grid grid-3" id="today-stocks" style="margin-top:14px"></div>';
     var dv = ov.derivatives;
     evidenceHtml += '<div class="grid grid-3">' +
       '<div class="blk stat-blk"><span class="k">BTC 市占率</span><span class="v">' + (ov.btcDominance === null ? '—' : ov.btcDominance.toFixed(1) + '%') + '</span><span class="s">全市场口径</span></div>' +
@@ -2744,7 +2753,7 @@ img.pava { object-fit: cover; }
       }
     }
 
-    /* 市值前6：6 砖一带 + 币股 2 个一排 */
+    /* 市值前6：6 砖一带 + 币股同为 3 个一排 */
     html += '<div class="zhead"><h2>市值前6</h2><span class="en">Top 6</span><span class="right">成交额 / 市值前 6 + 大币股</span></div>' + snapshotHtml;
 
     /* AI追踪精选：进行中的观察轮次最多 3 条，各自成块，上榜时间写在块上 */
@@ -2901,6 +2910,195 @@ img.pava { object-fit: cover; }
     /* 该源偶发 501/超时，失败重试一次（只重试传输，不改口径） */
     return once('').then(function (h) { return h || once('_r'); });
   }
+  /* ---------------- 币股详情（腾讯美股：报价 + 前复权日线，单页滚动） ----------------
+   * 报价字段下标于 2026-11-27 用 usMSTR/usCOIN/usCRCL/usHOOD 真实返回逐个核对：
+   * [3] 现价 · [4] 昨收 · [5] 今开 · [6] 成交量（股，与 [36] 双处一致）· [30] 时间 ·
+   * [31] 涨跌额 · [32] 涨跌% · [33] 最高 · [34] 最低。核对证据：[31]=[3]−[4] 与
+   * [32]=[31]/[4] 在四只票上同时精确成立；高≥现价≥低、今开落在高低之间；
+   * 今开/现价/最高/最低/成交量与日线最后一根逐项相等。页面内再做一遍自洽自检，
+   * 不自洽的字段单个丢弃（该格显示 —），绝不硬填。日线行序：[日期,开,收,高,低,量]。 */
+  function parseStockQuote(def, fields) {
+    var base = parseTencentQuote({ q: def.q, name: def.name, zone: 'America/New_York' }, fields);
+    if (!base) return null;
+    var price = base.value;
+    function num(i) { return VX.finiteNumber(fields[i]); }
+    var prevClose = num(4), open = num(5), volume = num(6);
+    var changeAmt = num(31), high = num(33), low = num(34);
+    var eps = Math.max(0.02, price * 0.003);
+    if (prevClose !== null && prevClose > 0 && changeAmt !== null) {
+      var impliedPct = (price - prevClose) / prevClose * 100;
+      if (Math.abs(price - prevClose - changeAmt) > eps ||
+          (base.change !== null && Math.abs(impliedPct - base.change) > 0.15)) {
+        prevClose = null; changeAmt = null;
+      }
+    } else { prevClose = null; changeAmt = null; }
+    if (high !== null && low !== null) {
+      if (high < low || price > high + eps || price < low - eps) { high = null; low = null; }
+    } else { high = null; low = null; }
+    if (open !== null && (open <= 0 || (high !== null && low !== null && (open < low - eps || open > high + eps)))) open = null;
+    if (volume !== null && volume < 0) volume = null;
+    return { base: base, prevClose: prevClose, open: open, volume: volume, changeAmt: changeAmt, high: high, low: low };
+  }
+  /* 前复权日线完整行（开/收/高/低/量），与 tencentDailyCloses 同端点同口径，只多返回整行。
+   * 实测注记（2026-11-27）：本机数据中心出口下该接口对美股个股只回最新一根
+   * （指数 usINX 正常回 400 根），疑似按访问来源降级；静态版在用户浏览器直连，
+   * 调用方对返回根数设下限（≥30 才画图与算趋势），不足就如实标暂不可用，绝不拿一两根冒充走势。 */
+  function tencentDailyCandles(q) {
+    function once(suffix) {
+      var varName = 'vxohlc_' + q + suffix;
+      var url = 'https://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?_var=' + varName +
+        '&param=' + q + ',day,,,800,qfq';
+      return loadScriptTag(url, null, 12000).then(function () {
+        var obj = window[varName];
+        try { delete window[varName]; } catch (e) { /* 忽略 */ }
+        try {
+          var node = obj && obj.data && obj.data[q];
+          var rows = node && (node.day || node.qfqday || node.usday);
+          if (!Array.isArray(rows)) return null;
+          var out = rows.map(function (r) {
+            return {
+              date: String(r[0]), time: Date.parse(String(r[0]) + 'T00:00:00Z'),
+              open: VX.finiteNumber(r[1]), close: VX.finiteNumber(r[2]),
+              high: VX.finiteNumber(r[3]), low: VX.finiteNumber(r[4]),
+              volume: VX.finiteNumber(r[5]),
+            };
+          }).filter(function (c) {
+            return Number.isFinite(c.time) && c.open !== null && c.close !== null &&
+              c.high !== null && c.low !== null && c.close > 0;
+          });
+          out.sort(function (a, b) { return a.time - b.time; });
+          return out.length ? out : null;
+        } catch (e) { return null; }
+      });
+    }
+    return once('').then(function (h) { return h || once('_r'); });
+  }
+  /* 日线聚合为周线 / 月线（周按 UTC 周一分组，月按自然月）：开=首根开、收=末根收、
+   * 高=组内最高、低=组内最低。与币页趋势同口径：每根按已收盘交易日序列处理。 */
+  function aggregateStockCandles(candles, unit) {
+    var groups = [], byKey = {};
+    candles.forEach(function (c) {
+      var key;
+      if (unit === 'M') {
+        key = c.date.slice(0, 7);
+      } else {
+        var dow = new Date(c.time).getUTCDay();
+        key = 'W' + (c.time - ((dow + 6) % 7) * 86400000);
+      }
+      var g = byKey[key];
+      if (!g) {
+        g = { open: c.open, close: c.close, high: c.high, low: c.low, quoteVol: 0, closeTime: c.time };
+        byKey[key] = g; groups.push(g);
+      }
+      g.close = c.close;
+      if (c.high > g.high) g.high = c.high;
+      if (c.low < g.low) g.low = c.low;
+      g.closeTime = c.time;
+    });
+    return groups;
+  }
+  function stockTrendHtml(candles) {
+    var tfs = [
+      ['日线', analyzeTimeframe(candles)],
+      ['周线', analyzeTimeframe(aggregateStockCandles(candles, 'W'))],
+      ['月线', analyzeTimeframe(aggregateStockCandles(candles, 'M'))],
+    ];
+    var html = tfs.map(function (t) {
+      if (!t[1]) return '<div class="trend-row"><span class="tf">' + t[0] + '</span><span class="pill">数据不足</span><span class="tb">已收盘 K 线不足 30 根，不给方向</span></div>';
+      var cls = t[1].dir === '多头' ? 'long' : t[1].dir === '空头' ? 'short' : 'flat';
+      return '<div class="trend-row"><span class="tf">' + t[0] + '</span><span class="badge ' + cls + '">' + t[1].dir + '</span><span class="tb">' + esc(t[1].basis) + '</span></div>';
+    }).join('');
+    var bull = 0, bear = 0;
+    tfs.forEach(function (t) { if (!t[1]) return; if (t[1].dir === '多头') bull++; else if (t[1].dir === '空头') bear++; });
+    var avail = tfs.filter(function (t) { return t[1]; });
+    var align = (avail.length >= 2 && avail.every(function (t) { return t[1].dir === avail[0][1].dir; }) && avail[0][1].dir !== '震荡')
+      ? '三周期同向（' + avail[0][1].dir + '）' : '三周期分化';
+    var net = bull - bear;
+    var conclusion = net >= 2 ? '三周期合力偏多' : net <= -2 ? '三周期合力偏空' : '多空交织，无明确合力';
+    html += '<div class="trend-ind">三周期对齐：<b>' + esc(align) + '</b> · 计票 多头 <b>' + bull + '</b> / 空头 <b>' + bear + '</b>（仅三周期方向票）</div>';
+    html += '<div class="trend-concl">综合（机械合成）：<b>' + esc(conclusion) + '</b></div>';
+    html += '<p class="plan-meta">口径：方向 = 收盘对 MA20 + 近 5 根高低点结构；周线 / 月线由日线在本页聚合；已收盘不足 30 根记数据不足。本块纯展示，不进任何评分。</p>';
+    return html;
+  }
+  function openStock(code) {
+    code = String(code || '').toUpperCase();
+    var def = null;
+    STOCK_DEFS.forEach(function (d) { if (d.code === code) def = d; });
+    var root = document.getElementById('stock-root');
+    if (!root) return;
+    var backBtn = '<button class="refresh-btn" onclick="window.__vxGo(\'today\')">← 返回今日</button>';
+    if (!def) {
+      root.innerHTML = '<div class="blk">' + backBtn +
+        '<div class="big" style="margin-top:12px;font-size:16px;font-weight:700">未知的币股代码</div>' +
+        '<p class="progress-line">本站只跟踪 MSTR / COIN / CRCL / HOOD 四只币股。</p></div>';
+      return;
+    }
+    var token = ++S.stockToken;
+    S.stockCode = code;
+    root.innerHTML =
+      '<div class="coin-top">' + backBtn +
+      '<span class="coin-title">' + esc(def.code) + '<small>' + esc(def.name) + ' · 美股 · 腾讯行情</small></span></div>' +
+      '<div class="blk"><p class="progress-line">正在读取 ' + esc(def.code) + ' 报价与前复权日线…</p></div>';
+    Promise.all([tencentQuotes([def.q]), tencentDailyCandles(def.q)]).then(function (r) {
+      if (token !== S.stockToken || S.route !== 'stock' || S.stockCode !== code) return;
+      var fields = r[0] ? r[0][def.q] : null;
+      var quote = fields ? parseStockQuote(def, fields) : null;
+      var candles = r[1];
+      if (!quote) {
+        root.innerHTML =
+          '<div class="coin-top">' + backBtn +
+          '<span class="coin-title">' + esc(def.code) + '<small>' + esc(def.name) + ' · 美股 · 腾讯行情</small></span></div>' +
+          '<div class="blk empty-blk"><div class="big">暂无可靠数据</div>' +
+          '<p>腾讯行情本次未取回可靠报价，本页不留占位假价。稍后重新打开本页再试。</p></div>';
+        return;
+      }
+      /* 日线不足 30 根（接口降级/新股历史短）时，报价照常展示，
+       * 走势图与趋势块各自如实标暂不可用，不拿一两根冒充走势。 */
+      var hasSeries = !!(candles && candles.length >= 30);
+      var b = quote.base;
+      var chgCls = b.change !== null && b.change >= 0 ? 'v-up' : 'v-down';
+      function cell(label, value, cls) {
+        return '<div class="blk stat-blk"><span class="k">' + label + '</span><span class="v' + (cls ? ' ' + cls : '') + '">' + value + '</span></div>';
+      }
+      var html =
+        '<div class="coin-top">' + backBtn +
+        '<span class="coin-title">' + esc(def.code) + '<small>' + esc(def.name) + ' · 美股</small></span></div>' +
+        '<div class="blk"><div class="zlabel"><span>现价 · 最近交易日</span><span style="margin-left:auto">' + (b.updatedAt ? fmtTime(b.updatedAt) : '') + '</span></div>' +
+        '<div class="coin-price-row"><span class="coin-price">' + fmtPrice(b.value) + '</span>' +
+        '<span class="coin-chg ' + chgCls + '">' + (b.change === null ? '—' : fmtChange(b.change)) + '</span></div>' +
+        '<p class="plan-meta" style="margin-top:6px">' + esc(b.status) + (b.updatedAt ? ' · 报价时间 ' + fmtTime(b.updatedAt) + '（北京时间）' : '') + '</p></div>' +
+        '<div class="grid grid-3">' +
+        cell('今开', fmtPrice(quote.open)) +
+        cell('昨收', fmtPrice(quote.prevClose)) +
+        cell('最高', fmtPrice(quote.high)) +
+        cell('最低', fmtPrice(quote.low)) +
+        cell('涨跌额', quote.changeAmt === null ? '—' : (quote.changeAmt >= 0 ? '+' : '-') + fmtPrice(Math.abs(quote.changeAmt)), quote.changeAmt === null ? '' : quote.changeAmt >= 0 ? 'v-up' : 'v-down') +
+        cell('成交量（股）', quote.volume === null ? '—' : fmtCompact(quote.volume)) +
+        '</div>' +
+        (hasSeries
+          ? '<div class="blk"><div class="zlabel"><span>近 120 个交易日 · 日线走势</span><span style="margin-left:auto">前复权 · 腾讯日线</span></div>' +
+            '<canvas class="chart-canvas" id="stock-chart"></canvas></div>' +
+            '<div class="zhead"><h2>趋势分析</h2><span class="en">Trend</span><span class="right">日线 / 周线 / 月线 · 机械规则</span></div>' +
+            '<div class="blk">' + stockTrendHtml(candles) + '</div>'
+          : '<div class="blk empty-blk"><div class="big">日线历史暂不可用</div>' +
+            '<p>本次只取回 ' + (candles ? candles.length : 0) + ' 根日线，走势图与趋势分析需要至少 30 根已收盘日线，不足就不画、不给方向。报价不受影响。</p></div>') +
+        '<details class="fold blk"><summary>口径与数据来源</summary><div class="fold-body">' +
+        '<p>数据来自腾讯行情公开接口（实时报价与前复权日线），可能延迟；报价时间为最近交易日收盘（美东时间），页面按北京时间显示。</p>' +
+        '<p>美股没有合约资金、主力成本、代币流向等加密口径，本页不设这些栏目。趋势分析为机械规则的展示，不进任何评分，不构成投资建议。</p>' +
+        '</div></details>';
+      root.innerHTML = html;
+      requestAnimationFrame(function () {
+        if (token !== S.stockToken || S.route !== 'stock') return;
+        var chart = document.getElementById('stock-chart');
+        if (chart) {
+          drawCoinChart(chart, candles.slice(-120).map(function (c) {
+            return { o: c.open, h: c.high, l: c.low, c: c.close };
+          }));
+        }
+      });
+    });
+  }
+
   /* 本站价格温度模型 price-temperature-v1（market-panorama.ts 移植）：
    * 输入为指数日线已收盘序列（腾讯日线），每根即一个已收盘日，直接进入窗口计算。 */
   function temperatureFromHistory(all) {
@@ -4901,6 +5099,11 @@ img.pava { object-fit: cover; }
     if (location.hash === target) applyRoute('coin', sym);
     else location.hash = target;
   };
+  window.__vxStock = function (code) {
+    var target = '#/stock/' + code;
+    if (location.hash === target) applyRoute('stock', code);
+    else location.hash = target;
+  };
   window.__vxGo = function (route) {
     if (location.hash === '#/' + route) applyRoute(route);
     else location.hash = '#/' + route;
@@ -4911,17 +5114,19 @@ img.pava { object-fit: cover; }
   function parseHash() {
     var parts = location.hash.replace(/^#\/?/, '').split('/');
     if (parts[0] === 'coin' && parts[1]) return { route: 'coin', symbol: parts[1].toUpperCase() };
+    if (parts[0] === 'stock' && parts[1]) return { route: 'stock', symbol: parts[1].toUpperCase() };
     if (parts[0] === 'plan' && parts[1]) return { route: 'plan', symbol: null, planKey: decodeURIComponent(parts.slice(1).join('/')) };
     if (parts[0] === 'person' && parts[1]) return { route: 'person', symbol: parts[1] };
     return { route: ROUTES.indexOf(parts[0]) >= 0 ? parts[0] : 'today', symbol: null };
   }
   function applyRoute(route, symbol) {
-    if (route !== 'coin' && route !== 'plan' && route !== 'person' && ROUTES.indexOf(route) < 0) route = 'today';
+    if (route !== 'coin' && route !== 'stock' && route !== 'plan' && route !== 'person' && ROUTES.indexOf(route) < 0) route = 'today';
     S.route = route;
     if (route === 'plan') S.planKey = symbol;
     if (route === 'person') S.personHandle = symbol;
+    if (route === 'stock') S.stockCode = symbol;
     document.querySelectorAll('.view').forEach(function (v) { v.classList.toggle('active', v.id === 'view-' + route); });
-    var navRoute = route === 'coin' ? 'today' : route === 'plan' ? 'signals' : route === 'person' ? 'voices' : route;
+    var navRoute = route === 'coin' || route === 'stock' ? 'today' : route === 'plan' ? 'signals' : route === 'person' ? 'voices' : route;
     document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.toggle('active', n.getAttribute('data-route') === navRoute); });
     window.scrollTo(0, 0);
     if (route === 'today' || route === 'signals') {
@@ -4939,6 +5144,8 @@ img.pava { object-fit: cover; }
       ensureScan();
     } else if (route === 'person') {
       renderPerson();
+    } else if (route === 'stock') {
+      openStock(symbol || '');
     } else if (route === 'coin') {
       loadCore().then(function () { renderToday(); });
       ensureScan();
