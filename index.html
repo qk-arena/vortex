@@ -294,11 +294,11 @@ details.fold .fold-body p { margin: 4px 0; }
 .liq-blk .st { font-size: 11px; color: var(--weak); margin-top: 6px; display: block; }
 
 /* ---------- 观点页 ---------- */
-.voice-blk { display: flex; align-items: center; gap: 10px; }
-.voice-blk .who { min-width: 0; }
-.voice-blk .nm { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.voice-blk .hd { font-size: 12px; color: var(--accent); }
-.voice-blk .fc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.voice-blk { display: flex; align-items: center; gap: 10px; min-height: 80px; }
+.voice-blk .who { min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.voice-blk .nm { font-size: 14.5px; font-weight: 700; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.voice-blk .hd { font-size: 12px; line-height: 1.4; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.voice-blk .fc { font-size: 12px; line-height: 1.4; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .voice-blk .go { margin-left: auto; color: var(--weak); font-size: 16px; flex: none; }
 a.blk-link { display: block; color: inherit; }
 a.blk-link:active .voice-blk { border-color: var(--line-strong); }
@@ -3007,6 +3007,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
 
   /* ---------------- 观点页（voice-registry.ts 静态移植） ---------------- */
   var FOLLOWED_X_ACCOUNTS = [
+    { name: '魏志成', handle: 'coolish', focus: '加密交易 · 2013 入圈' },
     { name: '超级幸运星', handle: 'luckybibiw1p', focus: '主流币 · 市场情绪' },
     { name: '潘驴邓晓闲缺一', handle: 'JohnsonZ91127', focus: '主流币 · 周期观察' },
     { name: '熹米周期轮动', handle: 'ximihoo1', focus: '周期轮动 · 资产配置' },
@@ -3028,7 +3029,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     { name: '熬鹰', handle: 'thankUcrypto', focus: '合约实盘 · 带单交易' },
   ];
   var CURATED_X_HANDLES = [
-    'coolish', 'PeterLBrandt', '_1woonomic', 'CryptoDonAlt', 'CryptoCred',
+    'PeterLBrandt', '_1woonomic', 'CryptoDonAlt', 'CryptoCred',
     'MustStopMurad', 'blknoiz06', 'theunipcs', 'RookieXBT', 'alphawifhat',
     'LindaRaschke', 'markminervini', 'alphatrends', 'CryptoHayes', 'RaoulGMI',
     'krugermacro', 'Pentosh1', 'BigCheds', '_Checkmatey_', 'Phyrex_Ni',
