@@ -512,6 +512,44 @@ img.pava { object-fit: cover; }
 /* 存疑与缺口块 */
 .gap-blk { border-color: rgba(255, 55, 97, 0.38); }
 
+/* ---------- 人物档案 · 四色标注体系（仅档案页） ----------
+ * 黄绿 #d4de27 可核验 · 绿 #2bea79 正向结果 · 红 #ff3761 负向结果
+ * 紫 #a78bfa 本人自述/未核验 · 灰蓝 #7aa2f7 转述/媒体/第三方口径 */
+.evtag.self { color: #a78bfa; border-color: rgba(167, 139, 250, 0.55); }
+.evtag.relay, .evtag.third { color: #7aa2f7; border-color: rgba(122, 162, 247, 0.5); }
+.num-ver { color: var(--accent); }
+.num-pos { color: var(--up); }
+.num-neg { color: var(--down); }
+.num-self { color: #a78bfa; }
+.num-relay { color: #7aa2f7; }
+.num-dead { color: var(--weak); text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* 色标图例（hero 下方一行） */
+.p-legend {
+  display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center;
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line);
+  font-size: 11.5px; color: var(--muted);
+}
+.p-legend .lg { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.p-legend .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dot.ver { background: var(--accent); } .dot.pos { background: var(--up); }
+.dot.neg { background: var(--down); } .dot.self { background: #a78bfa; } .dot.relay { background: #7aa2f7; }
+
+/* 演示稿节奏：档案页大节标题与留白 */
+#person-root .zhead { margin-top: 36px; }
+#person-root .zhead h2 { font-size: 20px; }
+#person-root .stat-blk .v { font-size: 21px; }
+
+/* 数据图（满幅 SVG，黑底细线色点） */
+.pchart-svg { display: block; width: 100%; height: auto; }
+.pchart-svg text { font-variant-numeric: tabular-nums; }
+.pbars i.c-pos { background: var(--up); }
+.pbars i.c-neg { background: var(--down); }
+.pbars i.c-self { background: #a78bfa; }
+.pbars i.c-relay { background: #7aa2f7; }
+.pbar-v.c-pos { color: var(--up); } .pbar-v.c-neg { color: var(--down); }
+.pbar-v.c-self { color: #a78bfa; } .pbar-v.c-relay { color: #7aa2f7; }
+
 </style>
 </head>
 <body>
@@ -3478,6 +3516,9 @@ img.pava { object-fit: cover; }
    * 人物档案 md，自述与可核验逐项分开标注，不编造。
    * 头像存 X_AVATARS 注册表（handle 为键，真实 X 头像 data URI），记录里以
    * avatar: X_AVATARS.<handle> 引用，卡片与档案页渲染时自动取用；无真实头像回退 mono 字徽。 */
+  /* BTC 价格线数据源：币安 BTCUSDT 日线收盘（2026-11-27 取数），按月 / 按周取点内嵌 */
+  var BTC_MONTHLY_CLOSES = [10285,10327,6924,9246,7485,6390,7731,7011,6627,6372,4041,3703,3434,3814,4104,5321,8555,10854,10081,9587,8289,9141,7542,7195,9353,8524,6410,8620,9448,9139,11335,11650,10777,13791,19696,28924,33093,45136,58741,57694,37254,35045,41462,47101,43824,61300,56951,46217,38467,43160,45510,37631,31801,19942,23293,20050,19423,20491,17164,16542,23125,23142,28465,29233,27210,30472,29232,25941,26963,34640,37724,42284,42580,61131,71280,60672,67540,62772,64628,58974,63328,70292,96408,93576,102430,84350,82550,94172,104592,107147,115764,108246,114049,109608,90360,87648,78741,66973,68284,76347,73674,58625,62888,78581,83624,77582,61793]; /* 2018-01 起逐月收盘 */
+  var BTC_WEEKLY_CLOSES = [43929,41732,41580,42031,42583,48300,52138,51729,63114,68956,68393,67210,71280,69360,65662,64941,63119,64012,61484,66274,68508,67766,69648,66677,63210,62772,55858,60798,68165,68250,58161,58713,58427,64220,57302,54870,59132,63579,65602,62820,62870,69032,68022,68776,80370,89856,97900,97185,101110,104464,95186,93738,98364,94545,101332,102620,97701,96463,96118,96258,94270,80734,82575,86083,82390,78430,83760,85179,93749,94278,104118,106454,109004,105643,105734,105594,100964,108357,109204,119087,117265,119416,114209,119294,117405,113494,108246,111137,115268,115232,112164,123482,114959,108643,114559,110541,104723,94261,86830,90360,90395,88172,88659,87953,91530,91014,93673,86670,76968,70330,68833,67643,65776,65971,72815,67859,66011,69034,70741,73802,78658,78569,82210,77458,77065,73674,63332,65746,63312,59577,63650,63780,64723,65400,63570,64902,62900,77734,77682,80342,76842,81178,84472,86530,83773,82116,80154,78354,74851,65351,61271,61793]; /* 2024-01-01 起逐周（周一锚）收盘 */
   var DOSSIERS = {
     coolish: {
       mono: '魏',
@@ -3496,8 +3537,8 @@ img.pava { object-fit: cover; }
         { to: 43258, dec: 0, sep: true, suffix: '', label: '账本订单总数', tag: 'verified', tagText: '可核验', note: 'BitMEX 账户 · 2020-05-01 起' },
         { to: 173577, dec: 0, sep: true, suffix: '', label: '成交明细条数', tag: 'verified', tagText: '可核验', note: 'GitHub 公开账本，可下载复算' },
         { to: 54.07, dec: 2, sep: false, suffix: '×', label: '账本等值倍数', tag: 'verified', tagText: '可核验', note: '1.83 BTC 基线 → 99.46 BTC 等值（调整后口径）' },
-        { to: 35.67, dec: 2, sep: false, suffix: '%', label: '胜率', tag: 'third', tagText: '第三方测算', note: '社区用其公开 API 数据测算（@supermao）' },
-        { to: 2.42, dec: 2, sep: false, suffix: '', label: '盈亏比', tag: 'third', tagText: '第三方测算', note: '同上 · 纪律评分 80/100' },
+        { tone: 'pos', to: 35.67, dec: 2, sep: false, suffix: '%', label: '胜率', tag: 'third', tagText: '第三方测算', note: '社区用其公开 API 数据测算（@supermao）' },
+        { tone: 'pos', to: 2.42, dec: 2, sep: false, suffix: '', label: '盈亏比', tag: 'third', tagText: '第三方测算', note: '同上 · 纪律评分 80/100' },
         { to: 2013, dec: 0, sep: false, suffix: '', label: '入圈年份', tag: 'self', tagText: '本人自述', note: '主页自述 · 帖子存档始于 2022-05' }
       ],
       does: [
@@ -3565,6 +3606,14 @@ img.pava { object-fit: cover; }
         { value: '80+ BTC', label: '媒体转述「两年做到 80+ BTC」', tag: 'relay', tagText: '媒体口径' }
       ],
       multiplesCaption: '四个数字口径不同、并不矛盾，但不可混引；引用账本数字时以仓库表格为准。',
+      charts: [
+        { title: '公开账本里程碑 · 等值 BTC（调整后口径）', kind: 'bars',
+          rows: [['2020-05 基线', 2, '1.84 BTC', 'ver'], ['2026-07 等值', 100, '99.46 BTC', 'ver']],
+          caption: 'GitHub 公开账本可复算：基线 1.83953943 XBT → 调整后钱包等值 99.46 XBT（54.07 倍）。条长按线性比例——1.84 相对 99.46 几乎不可见，这个反差本身就是倍数。' },
+        { title: 'Hyperliquid 公开实盘 · 已实现盈亏进程（美元）', kind: 'curve', color: 'relay',
+          points: [['2025-11-16 转入约 10 万美元开盘', 0, '$0'], ['2025-12-04', 3300, '+$3,300'], ['2025-12-16', 3100, '+$3,100']],
+          caption: 'Coinbob 链上监测、BlockBeats 发布（第三方监测口径）：新战场开局近一个月，已实现盈利在三千美元量级小幅波动——与 BitMEX 账本的体量是两回事，按监测口径看待。' }
+      ],
       recordSelf: [
         '2025-11-13 长帖自述：实盘近五年、三年、一年、三个月都跑赢 BTC，近三年回撤远低于 BTC 本身；「从 3 万 U 开始，只交易 BTC，近 2 年多做到极低回撤，同时有 85 倍左右复利（2022 年底重新从 1 个多 BTC 做起）」。85 倍为本人表述；GitHub 账本可验证的是 2020 年基线以来的 54.07 倍（调整后等值口径），两个数字口径不同、并不矛盾，但请勿混用。',
         '2025-04-03 自述：账户在 2022 年 11 月之前资金曲线「很凉兮」、大起大落，之后「如同换了一个人」，转向日拱一卒——这是他把 2020–2022 称为自己迭代「2.0 阶段」、之后为「3.0 阶段」的原因，账本曲线形态与此自述一致。',
@@ -3624,7 +3673,7 @@ img.pava { object-fit: cover; }
       ],
       stats: [
         { to: 55, label: '币安带单样本仓位段数', tag: 'third', tagText: '交易所数据整理', note: '2026-09-02 至 11-18 · Trade Replayer 整理币安官方带单数据' },
-        { to: 99.2, dec: 1, suffix: ' 万', label: '40 段完整仓位净盈亏（USDT）', tag: 'third', tagText: '交易所数据整理', note: '胜率 55.0% · 盈亏比 1.58' },
+        { tone: 'pos', to: 99.2, dec: 1, suffix: ' 万', label: '40 段完整仓位净盈亏（USDT）', tag: 'third', tagText: '交易所数据整理', note: '胜率 55.0% · 盈亏比 1.58' },
         { to: 95, suffix: '%', label: '单笔 ETH 空单占样本净利', tag: 'third', tagText: '交易所数据整理', note: '2026-11-04 一笔 +94.2 万 USDT · 利润高度集中' },
         { to: 20000, sep: true, suffix: '%', label: '关闭 OKX 带单时的收益率', tag: 'self', tagText: '本人自述', note: '2024-07-24 在高点主动关停 · 本人原帖自记' },
         { to: 1000, sep: true, label: '币安带单跟单人数（满员）', tag: 'third', tagText: '平台快照', note: '币安广场 2026-11 中旬抓取' },
@@ -3634,7 +3683,7 @@ img.pava { object-fit: cover; }
         '只做合约：BTC / ETH 大币波段加热点小币短打为主，近年延伸到交易所的美股与商品永续——NVDA、MU、SK 海力士、CRCL、原油都出现在他的实盘记录里。',
         '同时是公开带单员，带单本身就是打法的一部分：固定金额开单、赚了就提走，带单户展示的是「车头」节奏而非全部身家。他对带单户的定位写得很直白（带单主页签名）：「赚了就都提出去，超高杠杆，不建议跟」。全网只有一个币安带单账号，其他同名带单号不是他（经 Trade Replayer 页面转述其声明）。'
       ],
-      bars: { title: '近 3 个月带单样本 · 利润构成（40 段完整仓位）', rows: [['2026-11-04 ETH 空单', 95, '约 95%'], ['其余 39 段合计', 5, '约 5%']], caption: 'Trade Replayer 整理币安官方带单数据（2026-09-02 至 11-18）：40 段合计净 +99.2 万 USDT，其中一笔 ETH 空单 +94.2 万。分方向看：做空 26 段净 +101 万 USDT，做多 29 段净 −1.54 万 USDT。条长按占比示意。' },
+      bars: { title: '近 3 个月带单样本 · 利润构成（40 段完整仓位）', rows: [['2026-11-04 ETH 空单', 95, '约 95%', 'pos'], ['其余 39 段合计', 5, '约 5%']], caption: 'Trade Replayer 整理币安官方带单数据（2026-09-02 至 11-18）：40 段合计净 +99.2 万 USDT，其中一笔 ETH 空单 +94.2 万。分方向看：做空 26 段净 +101 万 USDT，做多 29 段净 −1.54 万 USDT。条长按占比示意。' },
       methods: [
         { title: '主引擎 · 事件驱动，指标退到辅助位', paras: [
           'OKX 专访（2025-06-24 发布）里他说得很完整：「我现在偏事件交易会多一点……我下单之前不是纯看 K 线的。」早期学过双均线、EMA、裸 K、斐波那契、波浪、道氏、海龟，「这些弯路我都走过」，到现在只剩裸 K、均线、成交量偶尔看。',
@@ -3669,6 +3718,14 @@ img.pava { object-fit: cover; }
         { value: '1,700 美元 → 千万', label: '媒体 / 专访标题口径 · 无交易所数据可核', tag: 'relay', tagText: '媒体口径' }
       ],
       multiplesCaption: '三个数字来源层级完全不同：交易所带单样本（+99.2 万 USDT）是唯一有平台数据的一档；截图与媒体口径不可与样本数据混引。',
+      charts: [
+        { title: '带单样本 · 分方向净盈亏（USDT）', kind: 'bars',
+          rows: [['做空 26 段', 100, '+101 万', 'pos'], ['做多 29 段', 2, '−1.54 万', 'neg']],
+          caption: 'Trade Replayer 整理币安官方带单数据（2026-09-02 至 11-18）：样本利润几乎全部来自空头，多头整体微亏。做多条长按其绝对值比例（约 1.5%）。' },
+        { title: '1WU 挑战 · 资金节点（万 U）', kind: 'curve', color: 'self',
+          points: [['2026-04 开始', 1, '1 WU'], ['2026-04-30 最高', 45, '45 WU'], ['2026-05-06', 7, '7 WU']],
+          caption: '本人原帖自记：1 万 U 独立账户挑战、不中途加保证金；04-30 记最高 45 WU，其后自记回吐 20 WU，05-06 记还剩 7 WU。存档站综述另称「滚到 100 WU」，与原帖矛盾，不采用。' }
+      ],
       recordSelf: [
         '起点与翻身（专访与媒体自述，无独立账本可核）：2021 年拿三五千元工资起步；反复做到 20 万又亏光（「20 万魔咒」）；最低谷现金 1.3 万元、网贷约 40 万元（BlockBeats 视频口径）。2024 年 3 月先用 BCH 5 倍做第一笔关键单——观察到 BSV 异动后推断同系 BCH 补涨，3,000U 一单做到 10,000U（+2.7 倍）；随后踩中铭文第二波、AI 波、Meme 波，媒体口径称 22 天 2 万 → 100 万、4 个月到千万。OKX 带单号「all in crypto」半年 3 倍、低回撤，是他辞职全职交易的转折（专访自述）。',
         '大单自述：DOGE 空单约 +100 万 U、ETH 抄底约 +130 万 U（马斯克-特朗普事件）；MOODENG 9 单无一亏损、100 多万做到 500 多万；2026-11-23 黄仁勋相关消息前做多 NVDA（BlockBeats 视频标题称十几分钟约 1,500 万人民币）——币安记录里确有 2026-11-23 20:55 开仓的 NVDA 多单（均价 134.93、名义约 10 万美元），但视频叙事的金额与消息细节属宣传口径，未核实。',
@@ -3723,10 +3780,10 @@ img.pava { object-fit: cover; }
         ['身份备注', '曾用小号做「500U 挑战」类公开实验（「川沐第一个500u」）；自称推文只为记录、不是喊单']
       ],
       stats: [
-        { to: 6952.40, dec: 2, suffix: '%', label: '跟单小号总收益率', tag: 'third', tagText: '平台截图存档', note: '2025-04-07 截图 · 资产 $1,079,149 · 订阅者 10,278 人' },
+        { tone: 'pos', to: 6952.40, dec: 2, suffix: '%', label: '跟单小号总收益率', tag: 'third', tagText: '平台截图存档', note: '2025-04-07 截图 · 资产 $1,079,149 · 订阅者 10,278 人' },
         { to: 61, label: '系统性做空新币的样本数', tag: 'self', tagText: '本人帖内自记', note: '2025-03-28 公布 · 55 胜 6 负' },
         { to: 3122, sep: true, label: '本次通读的存档文档', tag: 'third', tagText: '存档通读', note: '原帖 3,103 条 · 2022-05-10 至 2026-09-22' },
-        { to: 1200, sep: true, suffix: ' 万', label: '自白总回撤（万美元）', tag: 'relay', tagText: '截图转述', note: '2026-11-05 · 存档外 Threads 截图转述 · 只剩本金' },
+        { tone: 'neg', to: 1200, sep: true, suffix: ' 万', label: '自白总回撤（万美元）', tag: 'relay', tagText: '截图转述', note: '2026-11-05 · 存档外 Threads 截图转述 · 只剩本金' },
         { to: 500, suffix: ' 美元', label: '铭文季公开实验起点', tag: 'relay', tagText: '第三方记载', note: '2023 · 做到 100 万美元 · Foresight 记为实盘可查' },
         { to: 2020, label: '爆仓负债的年份（312）', tag: 'self', tagText: '本人自述', note: '负债一百多万 · 姐姐 7 万元救命钱' }
       ],
@@ -3771,6 +3828,17 @@ img.pava { object-fit: cover; }
         { value: '约 100 倍', label: '2022 年 LUNA 重上架一战 · 本人长文自述', tag: 'self', tagText: '本人自述' }
       ],
       multiplesCaption: '三个数字来源层级不同：平台截图可核、第三方记载居中、本人长文自述为最低一档，不可混引。',
+      charts: [
+        { title: '股票复盘 · 推荐价 → 期间最高价倍数（本人复盘口径）', kind: 'bars',
+          rows: [['LITE', 100, '11.2 倍', 'self'], ['MU 美光', 95, '10.6 倍', 'self'], ['2 倍海力士 ETF', 75, '8.4 倍', 'self'], ['SK 海力士', 36, '4.0 倍', 'self'], ['COHR', 24, '2.7 倍', 'self'], ['中韩半导体 ETF', 20, '2.2 倍', 'self'], ['MRVL', 19, '2.1 倍', 'self']],
+          caption: '2026-07-04 本人半年复盘帖自记的推荐价与期间最高价之比。用的是最高价而非卖出价，天然偏乐观，且有中途卖出未通知跟随者的第三方批评——整图按自述层看待。' },
+        { title: '系统性做空新币 · 样本胜负（本人自记）', kind: 'bars',
+          rows: [['盈利', 90, '55 个', 'pos'], ['亏损', 10, '6 个', 'neg']],
+          caption: '2025-03-28 本人帖内自记：按市值排名做空 61 个新币，55 胜 6 负。无逐笔交割单公开，胜负着色只表示其自记结果方向，证据层级为自述。' },
+        { title: '公开实验里程碑（两个独立实验，非同一账户）', kind: 'curve', color: 'relay', dash: true, log: true,
+          points: [['2023 铭文季起点', 500, '$500'], ['2023 铭文季', 1000000, '$100 万'], ['2025-03 小号起点', 10000, '约 $1 万'], ['2025-04-07 小号', 1079149, '$107.9 万']],
+          caption: '铭文季 500 美元 → 100 万美元为第三方记为「实盘可查」；2025 年做空小号约一个月做到 $1,079,149 为跟单平台截图存档。两段是不同账户的不同实验，虚线只连接节点先后（对数轴），不是资金曲线。' }
+      ],
       recordSelf: [
         '2026-07-04 半年复盘帖原账：$MRVL 156 推荐、35 天最高 329；$MU 118 推荐、10 个月最高 1,255；$LITE 97 推荐、10 个月最高 1,085；$COHR 164 推荐、7 个月最高 440；海力士年初 75 万韩元推荐、6 个月最高 298 万；中韩半导体 ETF 3.2 推荐、最高 7.1；2 倍海力士 ETF 23 推荐、最高 193。他同时自认港股互联网与 NOK 是今年最失败的两笔。',
         '2026-05-11 第三方新闻转引他晒的持仓截图：中韩半导体 ETF（513310）500 万份、持仓约 2,794 万元、浮盈约 2,938 万元，已出本金（截图口径）。',
@@ -3865,6 +3933,17 @@ img.pava { object-fit: cover; }
         '2025 年 10 月顶部：2024 年 2 月发帖、置顶至命中，BTC 实际于 2025 年 10 月初见顶。这是他全部信誉的支点：时间点提前 20 个月公开、期间不修改、月份精确命中。多家第三方（Followin、镜像站简介聚合、日文圈转述）一致确认置顶帖的存在与命中。',
         '2026 年大底 / 约 6 万美元：进行中。2026-11 下旬价格正测试该区域，最终判定要等 2026 年底至 2027 年的走势确认。'
       ],
+      charts: [
+        { title: '两次公开考试 · 判断点 vs BTC 实际价格', kind: 'btc', series: 'weekly',
+          hline: { v: 60000, label: '大底参考价约 60,000（本人自述）' },
+          markers: [
+            { date: '2024-02-01', kind: 'call', below: true, label: '2024-02 置顶喊顶' },
+            { date: '2025-10-06', v: 124767, kind: 'hit', label: '实际见顶 124,767 · 命中' },
+            { date: '2026-02-05', kind: 'call', label: '2026-02-05 喊大底' },
+            { date: '2026-06-30', v: 58532, kind: 'open', below: true, label: '年内低点 58,532 · 进入参考区，未决' }
+          ],
+          caption: '价格线为 BTC 周线收盘（币安日线收盘按周取点，2024-01 → 2026-11）。顶部判断提前约 20 个月置顶喊出、实际于 2025 年 10 月初见顶（命中，绿）；2026 年大底判断进行中（灰），不记命中也不记落空。他的可核验样本只有这两次考试，本页不编第二张图。' }
+      ],
       recordSelf: [
         '2020 年 4–10 月「持续发帖喊买 BTC 并做到 10 倍」——简介自述，那批帖子原文未读到。',
         '资产两位数亿日元——较新版简介自加，无任何佐证。',
@@ -3958,9 +4037,16 @@ img.pava { object-fit: cover; }
       multiples: [
         { value: '最高一档', label: 'FTX 排行榜总 PnL · 2021–2022（多家一致转述，原始数据不可复查）', tag: 'relay', tagText: '转述' },
         { value: '+397%', label: '被指认 Hyperliquid 钱包浮盈 · 本人未认领', tag: 'third', tagText: '第三方监测' },
-        { value: '10 亿美元', label: '网传 FTX 账户总值截图 · 无权威出处，不采信为战绩', tag: 'relay', tagText: '网传口径' }
+        { dead: true, value: '10 亿美元', label: '网传 FTX 账户总值截图 · 无权威出处，不采信为战绩', tag: 'relay', tagText: '网传口径' }
       ],
       multiplesCaption: '「从 1,000 美元起家」「做到 10 亿美元」均出自社区叙事与网传截图，无账本、无审计；FTX 排行榜能证明的只是「2021–2022 年他是该所 PnL 最高一档的交易者之一」，证明不了起点与终点的具体数字。引用其战绩时必须停在这一层。',
+      charts: [
+        { title: 'LUNA 一战 · 入场 → 归零结构', kind: 'luna',
+          caption: '示意图：价格曲线形状为示意。数字只用档案记录——2022-03-14 对赌 1,000 万美元（Cobie 托管）加 FTX 永续空单 1,000 万美元，对赌价位带约 88–92 美元；2022-05-07 本人披露空单已盈利 230 万美元；2022-05 中旬 LUNA 归零；崩盘后以 0.72 美元对冲掉 2,000 万美元空头敞口。' },
+        { title: '关键判断留痕 · 结果分布（本页留痕条目）', kind: 'bars',
+          rows: [['命中', 100, '5 条', 'pos'], ['未决 / 事后对照', 40, '2 条', 'relay'], ['落空', 20, '1 条', 'neg']],
+          caption: '按下文「关键判断留痕」统计：命中——2021-05 做空 DOGE 顶部、反对超级周期叙事、做空 SHIB 与元宇宙、LUNA 对赌与做空、2022 年底转多长持；落空——2024-04 山寨季判断偏早；未决 / 事后对照——ETH 10,000（无期限）、亚洲驱动论。汇编有选择偏差，错帖留存率天然更低。' }
+      ],
       recordSelf: [
         '「从 1,000 美元起家」：其成名叙事的起点数字，来源是社区与二手人物串（Binance Square、OKX Orbit 均以此开篇），无任何账本或排行榜数据支撑到这一粒度；「做到 10 亿美元」同理——网传一张其 FTX 账户总值约 10.13 亿美元、浮盈约 9.87 亿美元的截图在社区广传，本页未找到该截图的权威出处，不采信为战绩，仅记录「此说存在」。',
         'SHIB 早期帖的数字：Arkham 画像称其第一帖大意为「投入 20 ETH 等五个月到牛市顶可值 4,000 万」，且实际只需 2 ETH；OKX 人物串则写「2K 美元 SHIB 变成 4,000 万」。版本互相出入，本页只记录「他早期公开谈过 SHIB 的小额长期赔率」这一事实层。',
@@ -4020,7 +4106,7 @@ img.pava { object-fit: cover; }
       ],
       stats: [
         { to: 6000, sep: true, suffix: ' 万', label: 'SOL 最大单笔仓位（万美元）', tag: 'self', tagText: '本人复盘披露', note: '不执行止损 · 亏 620 万美元成账户历史最大单笔亏损' },
-        { to: 72, suffix: '%', label: '2024-12 胜率', tag: 'relay', tagText: '媒体转述其复盘', note: '当月开单 47 笔 · 多家媒体转述一致' },
+        { tone: 'pos', to: 72, suffix: '%', label: '2024-12 胜率', tag: 'relay', tagText: '媒体转述其复盘', note: '当月开单 47 笔 · 多家媒体转述一致' },
         { to: 11, suffix: ' / 12', label: '2024 年盈利月份', tag: 'relay', tagText: '本人复盘口径', note: '12 个月中 11 个月盈利 · 无账本可复算' },
         { to: 80, suffix: '%', label: '2021-05 最深回撤', tag: 'self', tagText: '专访自述', note: '被迫在底部去杠杆 · 此后全部风控观的来源' },
         { to: 100, suffix: '+', label: '公开交易的代币数', tag: 'third', tagText: '第三方报道', note: '仅 2 个与 Tangent 天使投资重合（本人长帖 + 报道口径）' },
@@ -4069,6 +4155,14 @@ img.pava { object-fit: cover; }
         { value: '80% 回撤', label: '2021-05 · 本人专访回顾自述（无当时记录可核）', tag: 'self', tagText: '本人自述' }
       ],
       multiplesCaption: '他的页面没有「倍数神话」：最硬的数字是本人复盘的月度统计与逐日对账的止损执行链；月度盈亏数字出自本人复盘、经媒体转述，无交易所原始数据可复算。',
+      charts: [
+        { title: '单笔风险分档 · 按信念定最大亏损（本人规则）', kind: 'bars',
+          rows: [['低信念', 10, '1%', 'self'], ['正常', 20, '2%', 'self'], ['高信念', 50, '5%', 'self'], ['极高信念', 100, '10%', 'self']],
+          caption: '2024-11-18 本人方法长帖《Crypto for Dummies（2024 版）》自述规则：单笔最大亏损按信念分四档，止损事先写明、触发即执行。属本人规则而非业绩数据，故全用自述色。' },
+        { title: '2024-12 复盘样本 · 胜负构成', kind: 'bars',
+          rows: [['盈利笔数', 72, '72%', 'pos'], ['亏损笔数', 28, '28%', 'neg']],
+          caption: '2024-12 本人复盘（多家媒体转述一致）：当月 47 笔、胜率 72%，全年 12 个月中 11 个月盈利；两笔最大亏损为 SOL 多单约 −620 至 −650 万美元（两个口径并存）与 DOGE 多单 −330 万美元。无交易所账本可复算。' }
+      ],
       recordSelf: [
         '2021 年 5 月回撤 80%、底部被迫去杠杆；2021 年把净值 80% 押 AVAX 单一资产；重仓单一 DeFi 协议永不恢复。全部出自 2024–2025 年专访的回顾自述，其 Eugene 账号 2023 年才设立，这段历史没有当时帖文可查。',
         '2024 年「11 个月盈利」同战绩节注：本人复盘口径。',
@@ -4128,9 +4222,9 @@ img.pava { object-fit: cover; }
       ],
       stats: [
         { to: 3200, sep: true, label: '2018 置顶帖喊出的底部（美元）', tag: 'verified', tagText: '原帖留痕', note: '±200 · 实际见底约 3,156 · 误差约 44 美元' },
-        { to: 48, suffix: ' 倍', label: 'Bybit 跟单账户倍数', tag: 'third', tagText: '第三方梳理', note: '10,000 美元起步 → 约 480,000 · OnChain Edge（2024-04）' },
+        { tone: 'pos', to: 48, suffix: ' 倍', label: 'Bybit 跟单账户倍数', tag: 'third', tagText: '第三方梳理', note: '10,000 美元起步 → 约 480,000 · OnChain Edge（2024-04）' },
         { to: 130000, sep: true, label: '2024 给出的周期顶区间上沿（美元）', tag: 'verified', tagText: '原帖留痕', note: '区间 120,000–130,000 · 实际高点约 126,000 落入区间' },
-        { to: 300, suffix: ' 万', label: '跟单账户近 90 天为跟随者净赚（万美元）', tag: 'third', tagText: '第三方梳理', note: '管理资金约 1,360 万 USDT · OnChain Edge 口径' },
+        { tone: 'pos', to: 300, suffix: ' 万', label: '跟单账户近 90 天为跟随者净赚（万美元）', tag: 'third', tagText: '第三方梳理', note: '管理资金约 1,360 万 USDT · OnChain Edge 口径' },
         { to: 8, suffix: ' 年', label: '公开喊单年头', tag: 'verified', tagText: '原帖留痕', note: '2018 至今 · 判断全公开、对错都可查' },
         { to: 33.6, dec: 1, suffix: ' 万', label: 'X 粉丝（约）', tag: 'third', tagText: '媒体口径', note: '2026-07 Daily Hodl 报道 · 此前各年报道在 21–31 万之间' }
       ],
@@ -4172,6 +4266,20 @@ img.pava { object-fit: cover; }
         { value: '140,000 落空', label: '2025-10 顶部已过后仍喊「再创新高」目标 · 明确未兑现', tag: 'third', tagText: '错判留痕' }
       ],
       multiplesCaption: '他的声誉建立在判断留痕而非盈亏留痕上：除 Bybit 跟单账户的第三方梳理数字外，他没有公开过任何全账户账本；媒体引用天然偏爱他说对的帖子，命中率印象会系统性偏高，错判已尽量并列收录。',
+      charts: [
+        { title: '大判断 vs BTC 实际价格（2018–2026）', kind: 'btc', series: 'monthly', log: true,
+          band: { lo: 120000, hi: 130000, left: true, label: '顶区间 120,000–130,000（2024 年给出）' },
+          markers: [
+            { date: '2018-06-23', kind: 'call', label: '置顶帖喊底 3,200 ±200' },
+            { date: '2018-12-15', v: 3156, kind: 'hit', label: '实际见底 3,156 · 命中' },
+            { date: '2025-10-06', v: 126000, kind: 'hit', label: '实际高点约 126,000 · 命中' },
+            { date: '2025-10-23', kind: 'miss', below: true, label: '2025-10 喊再创新高 140,000 · 落空' }
+          ],
+          caption: '价格线为 BTC 月线收盘（币安日线收盘按月取点，2018-01 → 2026-11，对数轴）；标记数值为档案记录的判断与实际低点 / 高点口径。媒体引用有幸存者偏差，错帖已尽量并列（140,000 落空帖在内）。' },
+        { title: 'Bybit 跟单账户 · 起步到梳理时（第三方梳理）', kind: 'curve', color: 'relay',
+          points: [['起步', 10000, '$1 万'], ['2024-04 梳理时', 480000, '约 $48 万']],
+          caption: 'OnChain Edge 通讯（2024-04）梳理的平台数据：跟单账户自 10,000 美元起步做到约 480,000 美元（48 倍），近 90 天为跟随者净赚约 300 万美元。本页未直接调取 Bybit 平台页复核。' }
+      ],
       recordSelf: [
         '「Benny / Benjamin Blunts」的姓名出自 2020–2021 年的媒体与访谈（FXStreet 引其帖署名「Benjamin Blunts」，Nuggets News 访谈称「Benny Bluntz」），其本人未在可检索范围内公开确认全名，本页只记录媒体用法。',
         'WIF 0.09 美元、涨幅 6,000%、铀矿预判等细节均出自 OnChain Edge 一家通讯的梳理，无第二来源逐笔核对，引用时应带出处。',
@@ -4228,7 +4336,7 @@ img.pava { object-fit: cover; }
         ['其他', '天使投资人（Ultiverse、Scallop、Particle Network、Meathook、Orbit Protocol、OKZOO、boop.fun 等）']
       ],
       stats: [
-        { to: 2400, sep: true, suffix: ' 万', label: 'TRUMP 单币盈利下限（万美元）', tag: 'third', tagText: '链上监测口径', note: 'Lookonchain（2025-08）· 成本约 3,000 枚 SOL · 三方对齐' },
+        { tone: 'pos', to: 2400, sep: true, suffix: ' 万', label: 'TRUMP 单币盈利下限（万美元）', tag: 'third', tagText: '链上监测口径', note: 'Lookonchain（2025-08）· 成本约 3,000 枚 SOL · 三方对齐' },
         { to: 3000, suffix: ' 枚', label: 'TRUMP 首日买入成本（SOL）', tag: 'third', tagText: '链上监测', note: '2025-01-18 约 10:15 首批买入' },
         { to: 115, suffix: ' 天', label: '入圈到首个百万元级收益', tag: 'self', tagText: '本人自述', note: '汇编转述 · 无链上账本级证据（见存疑节）' },
         { to: 5456, sep: true, suffix: ' 条', label: 'X 发帖总数', tag: 'third', tagText: '账号数据页', note: 'TwitterScore / KOLON · 2026-11' },
@@ -4270,9 +4378,17 @@ img.pava { object-fit: cover; }
       multiples: [
         { value: '2,400 万美元+', label: 'TRUMP 单币盈利 · Lookonchain 监测口径', tag: 'third', tagText: '链上监测' },
         { value: '约 2,880 万美元', label: 'TRUMP 持仓测算上限（若未卖出）· Odaily 测算', tag: 'third', tagText: '第三方测算' },
-        { value: '4 亿美元', label: '同一汇编称其 TRUMP「最高浮盈 400M」· 与监测口径严重不符，明确弃用', tag: 'relay', tagText: '弃用口径' }
+        { dead: true, value: '4 亿美元', label: '同一汇编称其 TRUMP「最高浮盈 400M」· 与监测口径严重不符，明确弃用', tag: 'relay', tagText: '弃用口径' }
       ],
       multiplesCaption: '四个口径里只有链上监测一档可采信：已实现与逐时发帖对齐的 1,040 万、监测口径的 2,400 万+、持仓测算上限约 2,880 万；汇编的 4 亿美元一数与监测严重不符，本页明确弃用。',
+      charts: [
+        { title: 'TRUMP 上线当日 · 盈利进程（链上监测对齐本人发帖）', kind: 'curve', step: true, color: 'relay',
+          points: [['10:15 买入', 0, '成本约 3,000 SOL'], ['11:24', 3400000, '已实现 $340 万', 'pos'], ['14:00', 10400000, '总盈利 $1,040 万', 'pos'], ['其后监测口径', 24000000, '$2,400 万+', 'pos']],
+          caption: '2025-01-18：本人逐时发帖与 Lookonchain / GMGN 链上监测三方对齐；Odaily 按持仓测算上限约 2,880 万美元。汇编所称「4 亿美元浮盈」与监测口径严重不符，明确弃用（见倍数对照）。' },
+        { title: 'GOAT 一笔 · 市值节点（本人复盘）', kind: 'curve', color: 'self',
+          points: [['首笔买入时市值', 650000, '$65 万'], ['末笔卖出时市值', 83000000, '$8,300 万']],
+          caption: '2024-10 本人复盘帖自述：GOAT 第一笔买在市值 65 万美元、最后一笔卖在 8,300 万美元，获利仅约 10 万美元——1% 的筹码本可价值 300 万美元。其教训原话：共识是涨出来的。' }
+      ],
       recordSelf: [
         '起步与首个百万：2021 年以不足万元本金入圈、115 天做到首个百万（汇编转述其自述与早期帖文；同期的 AMA 记录可旁证其 2021 年 5 月已在 BSC 土狗圈活跃、且先做小社区再转 NFT，时间线吻合，但「万元」「115 天」「百万」三个具体数字无链上账本级证据）。',
         'Monkey Land 近 200 ETH（OKX 专访的嘉宾介绍口径，本人未在受访中逐笔复盘）。GOAT 获利约 10 万美元（2024.10 本人复盘帖：买点 65 万市值、卖点 8,300 万市值；链上可部分核对，本页未逐笔复算）。',
@@ -4324,9 +4440,9 @@ img.pava { object-fit: cover; }
         ['自我定位', '「透明」是其人设核心——公开贴单、公开认错；明确反感付费群（播客专章「Why Salsa Doesn\'t Like Paid Groups」）']
       ],
       stats: [
-        { to: 3956.56, dec: 2, suffix: '%', label: 'WSOT 2020 个人盈亏榜收益率', tag: 'verified', tagText: 'Bybit 官方', note: '个人赛第二名 · 交易所官方计分与发稿' },
-        { to: 8.76, dec: 2, suffix: ' BTC', label: '部队账户三周终点', tag: 'verified', tagText: '赛事报道', note: '起步 0.19 BTC · Blockcast / Cointelegraph 报道' },
-        { to: 66.7, dec: 1, suffix: '%', label: '2026 喊单命中率（第三方计分）', tag: 'third', tagText: 'RAFA 评分站', note: '90 天窗口已计分 12 条、命中 8 条 · 样本很小' },
+        { tone: 'pos', to: 3956.56, dec: 2, suffix: '%', label: 'WSOT 2020 个人盈亏榜收益率', tag: 'verified', tagText: 'Bybit 官方', note: '个人赛第二名 · 交易所官方计分与发稿' },
+        { tone: 'pos', to: 8.76, dec: 2, suffix: ' BTC', label: '部队账户三周终点', tag: 'verified', tagText: '赛事报道', note: '起步 0.19 BTC · Blockcast / Cointelegraph 报道' },
+        { tone: 'pos', to: 66.7, dec: 1, suffix: '%', label: '2026 喊单命中率（第三方计分）', tag: 'third', tagText: 'RAFA 评分站', note: '90 天窗口已计分 12 条、命中 8 条 · 样本很小' },
         { to: 72, suffix: ' 次', label: '2026 年公开方向喊单', tag: 'third', tagText: 'RAFA 记录', note: '2026 年 5–11 月 · BTC 53 次、ETH 19 次' },
         { to: 2015, label: '入行年份', tag: 'self', tagText: '本人自述', note: '播客与名录自述 · 无独立文件核验' },
         { to: 22.7, dec: 1, suffix: ' 万', label: 'X 粉丝（约）', tag: 'third', tagText: '数据页口径', note: '2026-11 · TwitterScore 与 KOLON 两站 22.6–22.8 万' }
@@ -4367,6 +4483,17 @@ img.pava { object-fit: cover; }
         { value: '约 10 万美元', label: '媒体按赛后币价对 8.76 BTC 的折算 · 非个人财富证明', tag: 'relay', tagText: '媒体折算' }
       ],
       multiplesCaption: '「小资金打大」的验证范围是比赛账户，不是职业生涯账本：比赛数字有 Bybit 官方与赛事媒体双重背书，但那是三周的比赛专用账户，且他本人明确说比赛打法（开局极端冒险）不代表日常交易。其个人账户的长期曲线、自营公司时期的记录从未公开。',
+      charts: [
+        { title: 'WSOT 2020 · 部队账户三周进程（BTC）', kind: 'curve', color: 'ver', dash: true,
+          points: [['开赛起步', 0.19, '0.19 BTC'], ['三周后', 8.76, '约 8.76 BTC']],
+          caption: '起止值为可核验硬数据（Bybit 官方赛果与赛事报道）：个人盈亏榜第二、+3,956.56%；中途报道记其部队内 P&L 一度 4,495.95%。连线形状为示意——比赛打法是排行榜定制的极端风格，不代表日常账户曲线。' },
+        { title: '2026 年公开喊单 · 币种构成（第三方记录）', kind: 'bars',
+          rows: [['BTC 方向喊单', 74, '53 次', 'relay'], ['ETH 方向喊单', 26, '19 次', 'relay']],
+          caption: 'RAFA 评分站记录（2026 年 5–11 月）：共 72 次方向喊单，集中在 BTC 与 ETH 两个品种。' },
+        { title: '2026 年已计分喊单 · 命中分布（第三方计分）', kind: 'bars',
+          rows: [['命中', 67, '8 条', 'pos'], ['未命中', 33, '4 条', 'neg']],
+          caption: '同一评分站 90 天窗口内已计分 12 条、命中 8 条（66.7%）。样本很小，只能证明他仍在持续发布可检验的判断，不能证明长期胜率。' }
+      ],
       recordSelf: [
         '2015 年入场、2017 年起全职、自营公司经历、大学退学做交易——均出自播客与名录的自述性介绍，无第三方文件佐证。',
         '职业生涯总收益、个人净资产：从未公开过可核数字。WSOT 的「10 万美元」是比赛账户的终点值，不是其个人财富证明；其天使投资组合（Fomo 等）侧面说明资金量级已不低，但金额不可考。',
@@ -4420,9 +4547,10 @@ img.pava { object-fit: cover; }
   }
   function personBarsHtml(rows) {
     return '<div class="pbars">' + (rows || []).map(function (r) {
+      var cls = r[3] ? ' c-' + r[3] : '';
       return '<div class="pbar-row"><span class="pbar-k">' + esc(r[0]) + '</span>' +
-        '<span class="pbar"><i style="--w:' + r[1] + '%"></i></span>' +
-        '<span class="pbar-v">' + esc(r[2]) + '</span></div>';
+        '<span class="pbar"><i class="' + cls.trim() + '" style="--w:' + r[1] + '%"></i></span>' +
+        '<span class="pbar-v' + cls + '">' + esc(r[2]) + '</span></div>';
     }).join('') + '</div>';
   }
   function cycleDays(c) {
@@ -4462,6 +4590,133 @@ img.pava { object-fit: cover; }
     }
     if (visual === 'alloc') return personBarsHtml(d.alloc.rows) + '<p class="cap-line">' + esc(d.alloc.caption) + '</p>';
     return '';
+  }
+  /* ---------- 人物档案 · 四色标注与数据图 ---------- */
+  var PCOLORS = { ver: '#d4de27', pos: '#2bea79', neg: '#ff3761', self: '#a78bfa', relay: '#7aa2f7', mut: '#9a9aa1' };
+  function numClsFor(tag, tone) {
+    if (tone === 'pos') return 'num-pos';
+    if (tone === 'neg') return 'num-neg';
+    if (tag === 'verified') return 'num-ver';
+    if (tag === 'self') return 'num-self';
+    return 'num-relay';
+  }
+  function fmtChartVal(v) {
+    return String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  function personChartHtml(c, d) {
+    if (c.kind === 'bars') return personBarsHtml(c.rows);
+    if (c.kind === 'curve') return curveSvgHtml(c);
+    if (c.kind === 'btc') return btcSvgHtml(c);
+    if (c.kind === 'luna') return lunaSvgHtml();
+    return '';
+  }
+  function curveSvgHtml(c) {
+    var W = 720, H = 200, x0 = 34, x1 = 686, top = 36, base = 160;
+    var pts = c.points || [];
+    var log = !!c.log;
+    function tr(v) { return log ? Math.log10(Math.max(v, 1)) : v; }
+    var tv = pts.map(function (p) { return tr(p[1]); });
+    var mn = Math.min.apply(null, tv), mx = Math.max.apply(null, tv);
+    if (mx <= mn) mx = mn + 1;
+    var padT = (mx - mn) * 0.22, padB = (mx - mn) * 0.10;
+    function Y(v) { return base - (tr(v) - mn + padB) / (mx - mn + padT + padB) * (base - top); }
+    function X(i) { return pts.length === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * i / (pts.length - 1); }
+    var col = PCOLORS[c.color] || PCOLORS.ver;
+    var s = '<svg class="pchart-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+    var d = '';
+    pts.forEach(function (p, i) {
+      var x = X(i), y = Y(p[1]);
+      if (i === 0) d = 'M ' + x.toFixed(1) + ' ' + y.toFixed(1);
+      else if (c.step) d += ' L ' + x.toFixed(1) + ' ' + Y(pts[i - 1][1]).toFixed(1) + ' L ' + x.toFixed(1) + ' ' + y.toFixed(1);
+      else d += ' L ' + x.toFixed(1) + ' ' + y.toFixed(1);
+    });
+    s += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2.2" stroke-linecap="round"' + (c.dash ? ' stroke-dasharray="6 4"' : '') + '/>';
+    s += '<line x1="' + x0 + '" y1="' + base + '" x2="' + x1 + '" y2="' + base + '" stroke="#3f4046" stroke-width="1"/>';
+    pts.forEach(function (p, i) {
+      var x = X(i), y = Y(p[1]);
+      var pc = p[3] ? (PCOLORS[p[3]] || col) : col;
+      var anchor = i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle';
+      var disp = p[2] != null ? p[2] : fmtChartVal(p[1]);
+      s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5" fill="' + pc + '" stroke="#080808" stroke-width="1.5"/>' +
+        '<text x="' + x.toFixed(1) + '" y="' + (y - 11).toFixed(1) + '" fill="' + pc + '" font-size="12.5" font-weight="700" text-anchor="' + anchor + '">' + esc(disp) + '</text>' +
+        '<text x="' + x.toFixed(1) + '" y="' + (base + 19) + '" fill="#8a8a90" font-size="11" text-anchor="' + anchor + '">' + esc(p[0]) + '</text>';
+    });
+    return s + '</svg>';
+  }
+  function btcSvgHtml(c) {
+    var isM = c.series === 'monthly';
+    var closes = isM ? BTC_MONTHLY_CLOSES : BTC_WEEKLY_CLOSES;
+    var n = closes.length;
+    var W = 720, H = 236, x0 = 16, x1 = 704, top = 42, base = 198;
+    var log = !!c.log;
+    function tr(v) { return log ? Math.log10(v) : v; }
+    var mn = tr(Math.min.apply(null, closes)), mx = tr(Math.max.apply(null, closes));
+    if (c.band) mx = Math.max(mx, tr(c.band.hi));
+    if (c.hline) mn = Math.min(mn, tr(c.hline.v));
+    var pad = (mx - mn) * 0.12; mx += pad; mn -= pad * 0.5;
+    function Y(v) { return base - (tr(v) - mn) / (mx - mn) * (base - top); }
+    function X(i) { return x0 + (x1 - x0) * i / (n - 1); }
+    function idxOf(dateStr) {
+      if (isM) {
+        var y = +dateStr.slice(0, 4), m = +dateStr.slice(5, 7);
+        return Math.min(n - 1, Math.max(0, (y - 2018) * 12 + (m - 1)));
+      }
+      var t = Date.parse(dateStr + 'T00:00:00Z');
+      return Math.min(n - 1, Math.max(0, Math.round((t - Date.UTC(2024, 0, 1)) / 604800000)));
+    }
+    var s = '<svg class="pchart-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+    var years = isM ? [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026] : [2025, 2026];
+    years.forEach(function (y) {
+      var i = idxOf(y + '-01-01');
+      if (i <= 0 || i >= n) return;
+      var gx = X(i).toFixed(1);
+      s += '<line x1="' + gx + '" y1="14" x2="' + gx + '" y2="' + base + '" stroke="#26272b" stroke-width="1"/>' +
+        '<text x="' + gx + '" y="' + (base + 18) + '" fill="#8a8a90" font-size="11" text-anchor="middle">' + y + '</text>';
+    });
+    if (c.band) {
+      var by1 = Y(c.band.hi), by2 = Y(c.band.lo);
+      s += '<rect x="' + x0 + '" y="' + by1.toFixed(1) + '" width="' + (x1 - x0) + '" height="' + Math.max(3, by2 - by1).toFixed(1) + '" fill="rgba(212,222,39,0.07)"/>' +
+        '<text x="' + (c.band.left ? x0 + 4 : x1 - 4) + '" y="' + (by1 - 6).toFixed(1) + '" fill="#d4de27" font-size="11" font-weight="700" text-anchor="' + (c.band.left ? 'start' : 'end') + '">' + esc(c.band.label) + '</text>';
+    }
+    if (c.hline) {
+      var hy = Y(c.hline.v);
+      s += '<line x1="' + x0 + '" y1="' + hy.toFixed(1) + '" x2="' + x1 + '" y2="' + hy.toFixed(1) + '" stroke="#a78bfa" stroke-width="1.2" stroke-dasharray="6 4"/>' +
+        '<text x="' + (x0 + 4) + '" y="' + (hy - 6).toFixed(1) + '" fill="#a78bfa" font-size="11" font-weight="700">' + esc(c.hline.label) + '</text>';
+    }
+    var path = closes.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join(' ');
+    s += '<path d="' + path + '" fill="none" stroke="#d8d8db" stroke-width="1.6"/>';
+    s += '<line x1="' + x0 + '" y1="' + base + '" x2="' + x1 + '" y2="' + base + '" stroke="#3f4046" stroke-width="1"/>';
+    (c.markers || []).forEach(function (mk) {
+      var i = idxOf(mk.date);
+      var v = mk.v != null ? mk.v : closes[i];
+      var x = X(i), y = Y(v);
+      var col = mk.kind === 'hit' ? PCOLORS.pos : mk.kind === 'miss' ? PCOLORS.neg : mk.kind === 'call' ? PCOLORS.ver : PCOLORS.mut;
+      var anchor = x < 90 ? 'start' : x > W - 90 ? 'end' : 'middle';
+      var ly = mk.below ? y + 19 : y - 12;
+      if (!mk.below && ly < 14) ly = y + 20;
+      s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5" fill="' + col + '" stroke="#080808" stroke-width="1.5"/>' +
+        '<text x="' + x.toFixed(1) + '" y="' + ly.toFixed(1) + '" fill="' + col + '" font-size="11.5" font-weight="700" text-anchor="' + anchor + '">' + esc(mk.label) + '</text>';
+    });
+    return s + '</svg>';
+  }
+  function lunaSvgHtml() {
+    var W = 720, H = 210, x0 = 30, x1 = 690, top = 30, base = 168;
+    function X(t) { return x0 + (x1 - x0) * t; }
+    function Yp(p) { return base - p / 100 * (base - top); }
+    var s = '<svg class="pchart-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+    s += '<rect x="' + X(0.10).toFixed(1) + '" y="' + Yp(92).toFixed(1) + '" width="' + (X(0.80) - X(0.10)).toFixed(1) + '" height="' + Math.max(3, Yp(88) - Yp(92)).toFixed(1) + '" fill="rgba(212,222,39,0.10)"/>';
+    s += '<text x="' + X(0.10).toFixed(1) + '" y="' + (Yp(92) - 8).toFixed(1) + '" fill="#d4de27" font-size="11.5" font-weight="700">2022-03-14 对赌价位带 88–92 美元</text>';
+    var d = 'M ' + X(0.14).toFixed(1) + ' ' + Yp(90).toFixed(1) + ' C ' + X(0.40).toFixed(1) + ' ' + Yp(86).toFixed(1) + ', ' + X(0.62).toFixed(1) + ' ' + Yp(72).toFixed(1) + ', ' + X(0.73).toFixed(1) + ' ' + Yp(58).toFixed(1) + ' C ' + X(0.77).toFixed(1) + ' ' + Yp(40).toFixed(1) + ', ' + X(0.79).toFixed(1) + ' ' + Yp(8).toFixed(1) + ', ' + X(0.80).toFixed(1) + ' ' + Yp(1).toFixed(1);
+    s += '<path d="' + d + '" fill="none" stroke="#9a9aa1" stroke-width="2" stroke-dasharray="6 4"/>';
+    s += '<text x="' + X(0.42).toFixed(1) + '" y="' + Yp(62).toFixed(1) + '" fill="#8a8a90" font-size="11">价格路径 · 示意</text>';
+    s += '<circle cx="' + X(0.73).toFixed(1) + '" cy="' + Yp(58).toFixed(1) + '" r="4.5" fill="#2bea79" stroke="#080808" stroke-width="1.5"/>';
+    s += '<text x="' + X(0.73).toFixed(1) + '" y="' + (Yp(58) - 12).toFixed(1) + '" fill="#2bea79" font-size="11.5" font-weight="700" text-anchor="middle">2022-05-07 披露空单已盈利 +230 万美元</text>';
+    s += '<circle cx="' + X(0.80).toFixed(1) + '" cy="' + Yp(1).toFixed(1) + '" r="4.5" fill="#ff3761" stroke="#080808" stroke-width="1.5"/>';
+    s += '<text x="' + (X(0.80) + 12).toFixed(1) + '" y="' + (Yp(1) + 4).toFixed(1) + '" fill="#ff3761" font-size="11.5" font-weight="700">2022-05 中旬 · 归零</text>';
+    s += '<line x1="' + x0 + '" y1="' + base + '" x2="' + x1 + '" y2="' + base + '" stroke="#3f4046" stroke-width="1"/>';
+    s += '<text x="' + x0 + '" y="' + (base + 20) + '" fill="#8a8a90" font-size="11">2022-03</text>';
+    s += '<text x="' + X(0.80).toFixed(1) + '" y="' + (base + 20) + '" fill="#8a8a90" font-size="11" text-anchor="middle">2022-05</text>';
+    return s + '</svg>';
   }
   function fmtCount(v, dec, sep) {
     var s = v.toFixed(dec);
@@ -4515,14 +4770,23 @@ img.pava { object-fit: cover; }
       '<p class="ph-portrait">' + esc(d.portrait) + '</p>' +
       '<div class="price-grid ph-facts">' + d.facts.map(function (f) {
         return '<div class="cell"><span>' + esc(f[0]) + '</span><b>' + esc(f[1]) + '</b></div>';
-      }).join('') + '</div></div>';
+      }).join('') + '</div>' +
+      '<div class="p-legend"><span class="lg"><i class="dot ver"></i>黄绿 · 可核验</span><span class="lg"><i class="dot pos"></i>绿 · 正向结果</span><span class="lg"><i class="dot neg"></i>红 · 负向结果</span><span class="lg"><i class="dot self"></i>紫 · 本人自述</span><span class="lg"><i class="dot relay"></i>灰蓝 · 转述口径</span></div></div>';
     /* 关键数字（3 个一排，数字滚动，口径与证据等级写在格里） */
     if (d.stats && d.stats.length) h += '<div class="zhead"><h2>关键数字</h2><span class="en">Key Numbers</span><span class="right">口径写在每格里</span></div>' +
       '<div class="grid grid-3">' + d.stats.map(function (st) {
         return '<div class="blk stat-blk rv"><div class="stat-top"><span class="k">' + esc(st.label) + '</span>' + evtagHtml(st.tag, st.tagText) + '</div>' +
-          '<span class="v"><span class="cnt" data-to="' + st.to + '" data-dec="' + (st.dec || 0) + '" data-sep="' + (st.sep ? '1' : '0') + '">' + fmtCount(st.to, st.dec || 0, st.sep) + '</span>' + esc(st.suffix || '') + '</span>' +
+          '<span class="v ' + numClsFor(st.tag, st.tone) + '"><span class="cnt" data-to="' + st.to + '" data-dec="' + (st.dec || 0) + '" data-sep="' + (st.sep ? '1' : '0') + '">' + fmtCount(st.to, st.dec || 0, st.sep) + '</span>' + esc(st.suffix || '') + '</span>' +
           (st.note ? '<span class="s">' + esc(st.note) + '</span>' : '') + '</div>';
       }).join('') + '</div>';
+    /* 数据图（演示稿主体：每图注明数据出处，缺料不编图） */
+    if (d.charts && d.charts.length) {
+      h += '<div class="zhead"><h2>数据图</h2><span class="en">Charts</span><span class="right">每图注明数据出处</span></div>';
+      d.charts.forEach(function (c) {
+        h += '<div class="blk doc-blk rv"><h3>' + esc(c.title) + '</h3>' + personChartHtml(c, d) +
+          (c.caption ? '<p class="cap-line">' + esc(c.caption) + '</p>' : '') + '</div>';
+      });
+    }
     /* 他做啥 + 数据条形图（缺料整节省略，不留空壳） */
     if ((d.does && d.does.length) || d.bars) {
       h += '<div class="zhead"><h2>他做啥</h2><span class="en">What</span></div>';
@@ -4548,7 +4812,7 @@ img.pava { object-fit: cover; }
       if (d.multiples && d.multiples.length) {
         h += '<div class="grid grid-3">' + d.multiples.map(function (mp) {
           return '<div class="blk stat-blk rv"><div class="stat-top"><span class="k">倍数口径</span>' + evtagHtml(mp.tag, mp.tagText) + '</div>' +
-            '<span class="v">' + esc(mp.value) + '</span><span class="s">' + esc(mp.label) + '</span></div>';
+            '<span class="v ' + (mp.dead ? 'num-dead' : numClsFor(mp.tag, mp.tone)) + '">' + esc(mp.value) + '</span><span class="s">' + esc(mp.label) + '</span></div>';
         }).join('') + '</div>';
         if (d.multiplesCaption) h += '<p class="foot-note">' + esc(d.multiplesCaption) + '</p>';
       }
