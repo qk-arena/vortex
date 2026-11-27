@@ -295,17 +295,34 @@ details.fold .fold-body p { margin: 4px 0; }
 .liq-blk .st { font-size: 11px; color: var(--weak); margin-top: 6px; display: block; }
 
 /* ---------- 观点页 ---------- */
-.voice-blk { display: flex; align-items: center; gap: 10px; min-height: 80px; }
+#view-voices .grid > * { min-width: 0; }
+#view-voices .fold-body { overflow-wrap: anywhere; }
+.voice-blk { display: flex; align-items: center; gap: 10px; min-height: 80px; min-width: 0; }
 .voice-blk .who { min-width: 0; display: flex; flex-direction: column; justify-content: center; }
 .voice-blk .nm { font-size: 14.5px; font-weight: 700; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .voice-blk .hd { font-size: 12px; line-height: 1.4; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .voice-blk .fc { font-size: 12px; line-height: 1.4; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .voice-blk .go { margin-left: auto; color: var(--weak); font-size: 16px; flex: none; }
 .voice-fold { display: block; }
-.voice-head { display: flex; align-items: center; gap: 10px; }
-.voice-head .who { flex: 1; }
+.voice-head { display: flex; align-items: center; gap: 10px; position: relative; }
+.voice-head .who { flex: 1; min-width: 0; }
+/* 三列窄卡：卡头改竖排（头像在上、名字/handle/定位逐行全宽），箭头钉右上角，
+ * 长名字与 handle 允许断行，不再被省略号截成一个字 */
+#voices-followed .voice-head, #voices-ai .voice-head { flex-direction: column; align-items: flex-start; gap: 5px; }
+#voices-followed .voice-head .who, #voices-ai .voice-head .who { width: 100%; }
+#voices-followed .voice-head .go, #voices-ai .voice-head .go { position: absolute; top: 0; right: 0; margin-left: 0; }
+#voices-followed .nm, #voices-ai .nm,
+#voices-followed .hd, #voices-ai .hd,
+#voices-followed .fc, #voices-ai .fc { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
 .voice-fold details.fold { margin-top: 8px; }
 .voice-fold .fold-body strong { color: var(--text-secondary); }
+/* 名单卡展开态 = 个人履历条目：做法一行关键词 + 战绩数字条目，一行一条 */
+.cv-how { display: flex; gap: 8px; align-items: baseline; }
+.cv-how .cv-k { flex: none; font-size: 11px; font-weight: 700; color: var(--weak); letter-spacing: 1px; }
+.cv-how .cv-v { font-size: 12.5px; line-height: 1.5; color: var(--text-secondary); overflow-wrap: anywhere; }
+.cv-feat { margin-top: 11px; }
+.cv-feat b { display: block; font-size: 15.5px; font-weight: 800; line-height: 1.3; color: var(--accent); overflow-wrap: anywhere; }
+.cv-feat span { display: block; font-size: 11.5px; line-height: 1.45; color: var(--muted); margin-top: 1px; overflow-wrap: anywhere; }
 .voice-blk .rk { font-size: 15px; font-weight: 800; color: var(--accent); min-width: 20px; text-align: center; flex: none; }
 .voice-blk .tp { font-size: 10.5px; font-weight: 600; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 0 6px; vertical-align: 2px; white-space: nowrap; }
 a.blk-link { display: block; color: inherit; }
@@ -402,7 +419,7 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line);
 }
 .voice-about .va-t { font-size: 12px; font-weight: 700; color: var(--accent); white-space: nowrap; }
-.voice-about .va-s { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.voice-about .va-s { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
 /* 头像：真实 X 头像图片（.pava 描边/光晕样式），无真实头像时回退设计字徽 */
 .pava {
@@ -513,15 +530,13 @@ img.pava { object-fit: cover; }
   <!-- ================= 观点 VOICES ================= -->
   <section class="view" id="view-voices">
     <div class="zhead"><h2>观点名单</h2><span class="en">Voices</span><span class="right">名单与公开主页</span></div>
-    <div class="blk empty-blk">
-      <p>这一页只有名单：产品关注的 X 账号与公开主页链接。静态版<b style="color:var(--text-secondary)">不做每日扫描、不抓取也不生成任何观点内容</b>；块可展开看摘要，带「关于他」的卡片整张点开是完整人物档案，块右上角箭头是对方的 X 主页，观点真伪请到原页核对。名单来自产品注册表 voice-registry（静态数据）。</p>
-    </div>
+    <p class="foot-note" style="margin:0 2px 12px">卡片展开看履历，右上角箭头去对方 X 主页；带「关于他」的卡片点开是完整档案。</p>
     <div class="zhead"><h2>关注名单</h2><span class="en">Followed</span><span class="right" id="voices-followed-count"></span></div>
-    <div class="grid grid-2" id="voices-followed" style="grid-template-columns:repeat(3,1fr)"></div>
+    <div class="grid grid-2" id="voices-followed" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div>
     <div class="zhead"><h2>精选名单</h2><span class="en">Curated</span><span class="right" id="voices-curated-count"></span></div>
-    <div class="grid grid-2" id="voices-curated" style="grid-template-columns:repeat(2,1fr)"></div>
+    <div class="grid grid-2" id="voices-curated" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
     <div class="zhead"><h2>AI 与软件工具</h2><span class="en">AI &amp; Tools</span><span class="right" id="voices-ai-count"></span></div>
-    <div class="grid grid-2" id="voices-ai" style="grid-template-columns:repeat(3,1fr)"></div>
+    <div class="grid grid-2" id="voices-ai" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div>
     <p class="foot-note">上榜不等于背书；交易名单摘要来自公开记录审计，AI 栏粉丝数为公开数据，截至 2026-11-27。</p>
   </section>
 
@@ -2481,21 +2496,32 @@ img.pava { object-fit: cover; }
     el.innerHTML = '扫描中：' + (parts.join(' · ') || '准备中') + '。数据全部来自币安公开接口实时计算。';
   }
 
-  /* ---------------- 大盘速览 · 币股（腾讯美股，逐个实测有数据才渲染） ----------------
-   * 代码 usMSTR/usCOIN/usCRCL/usHOOD 于 2026-11-27 逐个实测 qt.gtimg.cn 返回真实报价
+  /* ---------------- 大盘速览 · 币股带（CRCL / COIN 腾讯美股 + HYPE 币安代币） ----------------
+   * 美股代码 usCRCL/usCOIN 于 2026-11-27 逐个实测 qt.gtimg.cn 返回真实报价
    * （字段口径同指数：[3] 现价 · [32] 涨跌% · [30] 时间，纽约时区）。
+   * HYPE 是 Hyperliquid 代币、不是美股：走币安现货 HYPEUSDT 24H 行情
+   * （与市值前6同源同口径、多主机轮换），点开进币页，不进币股页。
    * 任一代码取不到/解析不出真实价格 → 该砖静默不渲染，绝不留假价或占位。 */
   var STOCK_DEFS = [
-    { q: 'usMSTR', code: 'MSTR', name: '微策略' },
-    { q: 'usCOIN', code: 'COIN', name: 'Coinbase' },
     { q: 'usCRCL', code: 'CRCL', name: 'Circle' },
-    { q: 'usHOOD', code: 'HOOD', name: 'Robinhood' },
+    { q: 'usCOIN', code: 'COIN', name: 'Coinbase' },
+  ];
+  /* 币股带顺序（用户 2026-11-27 定，只保留这三个）：CRCL、HYPE、COIN */
+  var BAND_DEFS = [
+    { kind: 'stock', code: 'CRCL' },
+    { kind: 'token', code: 'HYPE', name: 'Hyperliquid', pair: 'HYPEUSDT' },
+    { kind: 'stock', code: 'COIN' },
   ];
   var todayStocksCache = undefined; /* undefined=未拉 · null=拉取中 · 数组=结果（可为空） */
   function renderTodayStocks(box) {
     if (!todayStocksCache || !todayStocksCache.length) { box.innerHTML = ''; box.style.display = 'none'; return; }
     box.style.display = '';
     box.innerHTML = todayStocksCache.map(function (it) {
+      if (it.kind === 'token') {
+        return '<div class="blk pulse-blk tap" onclick="window.__vxCoin(\'' + it.code + '\')"><div class="sym"><span class="sym-l"><b>' + esc(it.code) + '</b></span><span>' + esc(it.name) + ' · 代币</span></div>' +
+          '<div class="p">' + fmtPrice(it.price) + '</div>' +
+          '<div class="c ' + (it.change >= 0 ? 'v-up' : 'v-down') + '">' + fmtChange(it.change) + '</div></div>';
+      }
       var q = it.quote;
       return '<div class="blk pulse-blk tap" onclick="window.__vxStock(\'' + it.def.code + '\')"><div class="sym"><span class="sym-l"><b>' + esc(it.def.code) + '</b></span><span>' + esc(it.def.name) + ' · 美股</span></div>' +
         '<div class="p">' + fmtPrice(q.value) + '</div>' +
@@ -2507,14 +2533,29 @@ img.pava { object-fit: cover; }
     if (!box) return;
     if (todayStocksCache !== undefined) { renderTodayStocks(box); return; }
     todayStocksCache = null;
-    tencentQuotes(STOCK_DEFS.map(function (d) { return d.q; })).then(function (quotes) {
-      var out = [];
+    var stockQuotesP = tencentQuotes(STOCK_DEFS.map(function (d) { return d.q; })).then(function (quotes) {
+      var byCode = {};
       STOCK_DEFS.forEach(function (d) {
         var f = quotes[d.q];
         if (!f) return;
         var parsed = parseTencentQuote({ q: d.q, name: d.name, zone: 'America/New_York' }, f);
-        if (parsed) out.push({ def: d, quote: parsed });
+        if (parsed) byCode[d.code] = { kind: 'stock', def: d, quote: parsed };
       });
+      return byCode;
+    }, function () { return {}; });
+    var hypeP = VX.firstOfficialJson(VX.SPOT_HOSTS.map(function (h) { return h + '/api/v3/ticker/24hr?symbol=HYPEUSDT'; }),
+      function (v) { return v && v.symbol === 'HYPEUSDT'; }, 4000).then(function (res) {
+        if (!res) return null;
+        var p = res.payload || {};
+        var price = VX.finiteNumber(p.lastPrice), change = VX.finiteNumber(p.priceChangePercent), qv = VX.finiteNumber(p.quoteVolume);
+        if (price === null || price <= 0 || change === null || qv === null || qv <= 0) return null;
+        return { kind: 'token', code: 'HYPE', name: 'Hyperliquid', price: price, change: change };
+      }, function () { return null; });
+    Promise.all([stockQuotesP, hypeP]).then(function (r) {
+      var byCode = r[0] || {};
+      if (r[1]) byCode[r[1].code] = r[1];
+      var out = [];
+      BAND_DEFS.forEach(function (b) { if (byCode[b.code]) out.push(byCode[b.code]); });
       todayStocksCache = out;
       var box2 = document.getElementById('today-stocks');
       if (box2 && S.route === 'today') renderTodayStocks(box2);
@@ -2592,7 +2633,7 @@ img.pava { object-fit: cover; }
     '<p>定调口径：今日定调看币安 USDT 现货全市场 24 小时涨跌宽度：上涨占比 ≥ 58% 且 BTC、ETH 同向上涨 → 适合做多；≤ 42% 且同向下跌 → 适合做空；BTC 24H 波动达 ±6%，或上涨占比 ≤ 15% / ≥ 85% → 极端风险（风险总闸）。其余为震荡。定调与单币计划（日线 / 12 小时收盘结构）周期不同，方向可以不一致，页面会给出示。</p>' +
     '<p>扫描池：市值前 50 非稳定币（CoinGecko → CoinLore → CoinPaprika 三源依次回退）。市值源全部不可用时，静态版回退为币安 24H 成交额前 50，并在页面明确标注「成交额排序」。</p>' +
     '<p>数据从哪来：行情全部由你的浏览器直连公开接口，本站没有服务器代取：币安现货与 U 本位合约官方 REST（多主机依次回退，K 线预算 2200ms、行情 1800ms）；市值排名 CoinGecko / CoinLore / CoinPaprika；恐惧贪婪指数 Alternative.me；BTC 市占率 CoinGecko / CoinPaprika 全球数据。每个数字都带抓取时间；页面显示的时间为北京时间。例外只有两项：账号与 AI 追踪账本读服务端版接口，因为这两项本来就只存在于服务端。</p>' +
-    '<p>全球指数与币股来自腾讯行情公开接口（指数与美股报价、日线收盘历史）；A 股 / 美股价格温度为本站模型，用上证指数与标普500的日线收盘在本页内计算。爆仓没有公开的历史汇总接口：本页用币安合约爆仓事件流在打开期间实时观察并标注样本口径，连不上时显示暂无可靠数据源。未平仓合约为币安合约主流 12 币样本的 openInterestHist 合计，非全市场总额。</p>' +
+    '<p>全球指数与币股带的 CRCL、COIN 来自腾讯行情公开接口（指数与美股报价、日线收盘历史）；币股带的 HYPE 是 Hyperliquid 代币，行情来自币安现货（与市值前 6 同源）。A 股 / 美股价格温度为本站模型，用上证指数与标普500的日线收盘在本页内计算。爆仓没有公开的历史汇总接口：本页用币安合约爆仓事件流在打开期间实时观察并标注样本口径，连不上时显示暂无可靠数据源。未平仓合约为币安合约主流 12 币样本的 openInterestHist 合计，非全市场总额。</p>' +
     '<p>趋势分析口径（机会详情页，纯展示、不进评分）：每周期只用已收盘 K 线（币安现货 1d / 1w / 1M）；方向票 = 收盘相对 MA20（上 +1 / 下 −1）+ 近 5 根与前 5 根高低点结构（高低点双抬高 +1 / 双降低 −1 / 其余 0），合计 ≥ +1 为多头、≤ −1 为空头、0 为震荡；已收盘不足 30 根记数据不足。综合计票 = 三周期方向 + 现货与合约 24H 净流入（taker 口径，流入为正记多头票）+ 资金费率（> +0.05% 记空头票，多头拥挤；< −0.05% 记多头票）+ 日线量能比（≥ 1 时跟随日线方向记一票）。精选与可执行计划的建议在发行时连同指标快照冻结写入服务端留档，只增不改，供事后核对。</p>';
 
   /* ---------------- 首页 AI追踪精选 ---------------- */
@@ -2911,10 +2952,10 @@ img.pava { object-fit: cover; }
     return once('').then(function (h) { return h || once('_r'); });
   }
   /* ---------------- 币股详情（腾讯美股：报价 + 前复权日线，单页滚动） ----------------
-   * 报价字段下标于 2026-11-27 用 usMSTR/usCOIN/usCRCL/usHOOD 真实返回逐个核对：
+   * 报价字段下标于 2026-11-27 用 usCOIN/usCRCL 真实返回逐个核对：
    * [3] 现价 · [4] 昨收 · [5] 今开 · [6] 成交量（股，与 [36] 双处一致）· [30] 时间 ·
    * [31] 涨跌额 · [32] 涨跌% · [33] 最高 · [34] 最低。核对证据：[31]=[3]−[4] 与
-   * [32]=[31]/[4] 在四只票上同时精确成立；高≥现价≥低、今开落在高低之间；
+   * [32]=[31]/[4] 在两只票上同时精确成立；高≥现价≥低、今开落在高低之间；
    * 今开/现价/最高/最低/成交量与日线最后一根逐项相等。页面内再做一遍自洽自检，
    * 不自洽的字段单个丢弃（该格显示 —），绝不硬填。日线行序：[日期,开,收,高,低,量]。 */
   function parseStockQuote(def, fields) {
@@ -3030,7 +3071,7 @@ img.pava { object-fit: cover; }
     if (!def) {
       root.innerHTML = '<div class="blk">' + backBtn +
         '<div class="big" style="margin-top:12px;font-size:16px;font-weight:700">未知的币股代码</div>' +
-        '<p class="progress-line">本站只跟踪 MSTR / COIN / CRCL / HOOD 四只币股。</p></div>';
+        '<p class="progress-line">本站只跟踪 COIN / CRCL 两只币股。</p></div>';
       return;
     }
     var token = ++S.stockToken;
@@ -3323,14 +3364,14 @@ img.pava { object-fit: cover; }
   /* ---------------- 观点页（voice-registry.ts 静态移植） ---------------- */
   var FOLLOWED_X_ACCOUNTS = [
     {"name":"魏志成","handle":"coolish","focus":"加密交易 · 2013 入圈","does":"只做BTC，合约中长线。BitMEX交易六年（2020–2026），2025年11月起转到Hyperliquid公开实盘。","how":"手动主观、图表驱动；金字塔式分批挂单，事前公布多空区间与资金配比（如多头约75%资金、2倍杠杆、空头目标区94,400–99,000），重仓位管理与回撤处理；公开只读API，全部历史成交任何人可逐笔下载核查；每年置顶汇总全年推文与交易感悟。","record":"GitHub公开账本（bwjoke/BTC-Trading-Since-2020）含其BitMEX账户2020-05-01至2026-07全部订单与成交（43,258笔订单），2020年起两年内1.8 BTC做到80+ BTC；BitMEX 11周年Legends官方页记其3年70倍收益（AlphaFox记为2020–2026六年54倍，口径不同但均公开可查）；2025-11-16起Hyperliquid以约1 BTC本金公开实盘，Coinbob/BlockBeats跟踪报道其挂单与持仓，2025-12初累计约+3,300美元。"},
-    {"name":"熬鹰","handle":"thankUcrypto","focus":"合约实盘 · 带单交易","does":"以币安永续合约为主战场，核心品种ETH、BTC、ZEC，并扩展到币安上的美股/商品永续（NVDA、MU、SPCX、原油等），多空都做，持仓中位约20小时，属日内到数日的波段交易。","how":"顺势与关键位分批建仓——下跌中在预设区间（如62,500→61,000）分段买入，区分「暴跌可抄、阴跌不碰」；盈利单拿得比亏损单久（中位22.6小时 vs 15.2小时）。","record":"Trade Replayer整理的其币安公开带单记录（2026-09-02至11-18）55段仓位中，40段完整净盈亏合计+992K USDT、胜率55%、盈亏比1.58，最大亏损单−302K也完整收录。但一笔2026-11-04 ETH空单+942K占全部净盈亏95%，去掉后其余39段合计仅约+50K；做空合计+1.01M、做多合计−15.4K。网传「从1,700美元做到千万」无法核实，不采信。"},
-    {"name":"川沐","handle":"xiaomustock","focus":"加密实盘 · 美股硬科技","does":"早年做加密（铭文、山寨合约、链上meme），2025年10月后明牌退出加密、转战美/港/A股AI硬科技，主仓存储（MU、海力士）与光通信（LITE、MRVL、COHR）。现主要发帖号为@xiaomustock（同一人）。","how":"加密期用交易量/市值量比、合约持仓与资金费率从庄家盘口反推强庄标的、顺涨幅榜做强势币；股票期顺产业链找供给瓶颈与寡头垄断环节重仓死拿，辅以LTCM式回撤防守和保留现金仓。","record":"2023年500美元做到100万美元（ORDI铭文期，实盘可查，Foresight News记载）；2025年做空一篮子山寨一个月1万美元做到约108万美元（跟单平台截图存档：资产$1,079,149、累计收益$1,080,606、总收益率6,952.40%、订阅者10,278人）；美股MU 118美元、LITE 97美元等推荐价与后续数倍涨幅有本人存档复盘可核（价格路径可公开行情核对）。反面：此前曾爆掉约2,000万；有网友质疑其部分喊单币后续收割、持仓卖出未同步跟买者，跟单风险真实存在。"},
-    {"name":"capitalnvest","handle":"Capitalnvest","focus":"BTC · 超大周期顶底","does":"只做BTC超大周期顶底（日文发帖，入市10年）。","how":"以减半周期时间轴提前一年以上公开给出顶/底时间窗口，置顶帖长期不变作证；底部区按「两轴」策略分批买入。","record":"2024年2月置顶预测2025年10月见顶、固定1年9个月后命中本轮约126,000的高点月份；2026年大底/约60,000抄底判断正在被跟踪验证。2020年持续喊买获10倍仅为其自述，未获独立核验；无交易所实盘PnL记录。"},
-    {"name":"GCR","handle":"GCRClassic","focus":"山寨做空 · 逆向交易","does":"加密永续/现货大级别方向交易，以山寨币做空和逆向仓位成名。","how":"逆大众情绪、在狂热顶部系统性做空山寨，耐心持有大仓位。","record":"2021–2022年多次登上FTX Top Traders排行榜前列并拿到最高一档总PnL（Gate Learn人物档案复盘）；2022年4月前后对LUNA的大额做空获利近一倍，另有与Do Kwon公开对赌LUNA一年内下跌、1,000万美元托管的公开记录（金额口径有不同版本）；被认为是其钱包0x37c在Hyperliquid充值316万USDC后组合达1,548万美元、浮盈约1,258万美元（+397%）（Spot On Chain链上监测，2024-12 HTX转载）。","note":"2023年初起基本停更；「1,000美元起家」等早期数字无法核实。价值在历史判断框架，不在实时喊单。"},
-    {"name":"Eugene","handle":"0xENAS","focus":"波段交易 · 公开复盘","does":"主流币＋山寨的流动性市场波段交易。","how":"月度公开复盘自己的交易与盈亏、预先写明止损位、只做风险收益比清晰的机会。","record":"账号设立初衷即公开透明化个人交易，100多个公开交易过的代币可逐一核对（PANews/CoinLive 2025-01报道）；2026-01-30公开重新做多BTC、止损设8万美元下方，1-31跌破后2-1发帖认止损离场；2026-03-16重新做多BTC/ETH、5-13 SOL多单止损离场，盈亏都公开留痕（第三方逐日对账）；专访含2021年5月曾回撤80%的自述败绩，记录不只报喜。","note":"2025年1月曾被指控利用VC身份内幕交易，本人逐条否认、无定论；2026年重心部分转向AI股票，加密发帖密度下降。"},
-    {"name":"Bluntz","handle":"SmartContracter","focus":"BTC/ETH · 技术面波段","does":"BTC、ETH及主流山寨的技术面波段交易。","how":"Elliott Wave＋摆动失败形态＋斐波那契0.618支撑，提前数月公开给出精确目标价并留帖为证。","record":"2018-06-23原帖（至今置顶）称BTC底部在正好3,200美元（±200），2018-12-15实际见底约3,156，误差内命中（NewsBTC/Bitcoinist/Daily Hodl多年反复引用复盘）；2022年被Daily Hodl以「准确预言2022年下跌的交易员」为题持续跟踪其后续喊单；2020-01-31「五浪上涨将突破14k」判断被NewsBTC报道，后于2020年中兑现至12k上方。","note":"成名作集中在2018–2022年，近年无公开实盘账本/链上钱包可核，观点价值大于可跟单价值；波浪计数主观性强，错单的媒体报道密度明显低于对单。"},
-    {"name":"0xSun","handle":"0xSunNFT","focus":"链上 Meme · 早期叙事重注","does":"链上一级市场猎手：2021年从BSC土狗起步，转战NFT，2023年后主攻Meme/铭文新叙事的最早期筹码（PEPE、ORDI、BOME、GOAT、TRUMP都有其身影）；现运营付费Alpha社群并做天使投资。约21万粉丝，简介是「Talk is cheap, show me the wallet.」。","how":"三重信息漏斗——把推特时间线训练成雷达（专盯粉丝不多但深耕单一领域者）、链上监控聪明钱动向、回溯新部署合约溯源（计算机背景，读合约代码起家）；项目按叙事/热度/筹码分布/创新度/团队运营五维评估；打法是早期叙事下重注、不追求绝对底部、分批止盈锁利润（2024年BOME一役后立为铁律），保本金优先。","record":"分两层：2021年以不足1万元本金入圈、115天做到首个百万元级，是本人自述（经其推文汇编转述，同期AMA可旁证时间线，但金额无链上账本级证据）；可核验的硬记录是2025年1月TRUMP——上线首日买入并逐时发帖（11:24称已实现盈利340万美元、14:00称总盈利1,040万美元），Lookonchain口径其TRUMP单币盈利超2,400万美元，Odaily按GMGN数据测算持仓上限约2,880万美元，本人发帖、GMGN与链上监测三方对齐。其主钱包长期被Lookonchain/GMGN列为Smart Money跟踪。反面留痕（本人自述）：Zkasino、Fomo两笔预售归零、KPR铸造白烧35 ETH Gas。","note":"链上验证只覆盖被标记的主钱包，他本人2025年7月长帖恰指出大车头普遍转用小号；且其运营付费社群，公开买入本身能瞬间抬价，具体点位对跟随者天然不利——看其方法与信息框架，不跟点位。"},
-    {"name":"SalsaTekila","handle":"SalsaTekila","focus":"BTC 剥头皮 · 透明贴单","does":"加拿大职业交易员，2015年入场、2017年起全职（曾供职自营交易公司）；主战场是BTC永续合约的低周期剥头皮，持仓以分钟到小时计，大周期仓位只用现货不用杠杆；2024年后转为现货持有加周期判断为主，日内逐笔贴单基本停发。约22.7万粉丝。","how":"核心是「动态期望值」：进场后随价格移动持续重算盈亏比（原例：11,800做多、目标12,000、止损11,700，涨到11,900即从2:1变成冒200险赚100，必须重新评估），不静态持有；选低周期是为压缩单笔暴露时间。杠杆必带止损与失效计划；资金隔离——交易所只留5–15%资产且是「全亏也认」的部分，其余冷存储。全部交易公开贴出让人挑错，以透明逼自己问责，明确反对付费群。","record":"验证等级最高的是2020年Bybit WSOT官方大赛：部队账户0.19 BTC三周滚至约8.76 BTC（赛事媒体逐日报道），个人盈亏榜第二名、+3,956.56%（Bybit官方新闻稿计分）。判断留痕：2020年10月「13,000美元是BTC最重要宏观关口」原帖当月兑现突破；2020年12月公开囤ETH现货赌跑赢BTC，2021年上半年兑现。近年：RAFA第三方计分其2026年5–11月72次方向喊单，90天窗口12条命中8条（样本小，不足以证胜率）。其职业生涯总收益与个人账户长期曲线从未公开。","note":"WSOT的极端滚仓是他本人声明为排行榜定制的打法——开局就冒大险、靠连胜滚注码，他原话「按每笔2%风险的日常打法连排行榜的边都摸不到」；比赛账户的表现不代表他的日常风险画像，引用+3,956.56%时必须连这条一起看。"}
+    {"name":"熬鹰","handle":"thankUcrypto","focus":"合约实盘 · 带单交易","howLine":"顺势波段 · 关键位分批建仓 · 暴跌可抄、阴跌不碰","feats":[["+992K USDT","55 段公开带单净盈亏 · 胜率 55% · 2026-09 至 11 样本"],["+942K","单笔 ETH 空单 · 占净盈亏 95%"],["1.58","样本盈亏比 · 最大单亏 −302K 同样在册"]]},
+    {"name":"川沐","handle":"xiaomustock","focus":"加密实盘 · 美股硬科技","howLine":"量价比选强庄币 · 顺涨幅榜 · 股票找产业链瓶颈重仓","feats":[["500 → 100 万美元","2023 · ORDI 铭文期实盘"],["1 万 → 108 万美元","2025 · 做空一篮子山寨 · 一个月"],["+6,952%","跟单账户收益率 · 订阅者 10,278 人"]]},
+    {"name":"capitalnvest","handle":"Capitalnvest","focus":"BTC · 超大周期顶底","howLine":"减半周期时间轴 · 提前一年定顶底 · 底部两轴分批买","feats":[["2024-02 置顶","预言 2025-10 见顶 · 命中约 126K 高点月份"],["10 年","入市年资 · 只做 BTC 大周期"],["约 60,000","2026 大底判断 · 跟踪验证中"]]},
+    {"name":"GCR","handle":"GCRClassic","focus":"山寨做空 · 逆向交易","howLine":"逆情绪 · 顶部系统性做空山寨 · 大仓位长持","feats":[["2021–2022","FTX 交易员排行榜前列 · 总 PnL 最高一档"],["1,000 万美元","2022 · 对赌 LUNA 一年内下跌 · 公开托管"],["1,548 万美元","2024 · 链上监测钱包组合 · 浮盈 +397%"]]},
+    {"name":"Eugene","handle":"0xENAS","focus":"波段交易 · 公开复盘","howLine":"预设止损 · 只做盈亏比清晰的机会 · 月度公开复盘","feats":[["100+","公开交易代币 · 盈亏可逐一核对"],["80% 回撤","2021-05 · 本人自述败绩 · 不只报喜"],["2026-01","BTC 多单破位止损离场 · 全程留痕"]]},
+    {"name":"Bluntz","handle":"SmartContracter","focus":"BTC/ETH · 技术面波段","howLine":"Elliott 波浪 · 摆动失败形态 · 斐波那契 0.618","feats":[["3,200 美元","2018 置顶喊底 · 实际见底 3,156"],["14K 突破","2020 预言 · 年中兑现"],["2022","下跌预言 · 媒体持续跟踪报道"]]},
+    {"name":"0xSun","handle":"0xSunNFT","focus":"链上 Meme · 早期叙事重注","howLine":"时间线雷达 · 聪明钱监控 · 合约溯源 · 早期重注分批止盈","feats":[["115 天","2021 · 不足 1 万元入圈到首个百万元级 · 本人自述"],["2,400 万美元+","2025-01 · TRUMP 单币盈利 · 链上可核"]]},
+    {"name":"SalsaTekila","handle":"SalsaTekila","focus":"BTC 剥头皮 · 透明贴单","howLine":"动态期望值 · 低周期剥头皮 · 杠杆必带止损 · 全部贴单公开","feats":[["0.19 BTC → 8.76 BTC","三周 · Bybit 首届大赛第 2 · +3,956.56%"],["13,000 美元","2020-10 · 称 BTC 最重要宏观关口 · 当月兑现"],["2020-12","公开囤 ETH 赌跑赢 BTC · 2021 上半年兑现"]]}
   ];
   /* X 真实头像（2026-11-27 抓取自各账号 X 头像，经 unavatar→pbs.twimg.com，
    * 已逐个验真：真实图片、非默认头像、彼此不同）。以 handle 为键，名单卡片与
@@ -3396,8 +3437,11 @@ img.pava { object-fit: cover; }
         '<div class="voice-head">' + avaHtml(a.handle, 'sm', a.name.charAt(0)) + '<div class="who"><div class="nm">' + esc(a.name) + '</div><div class="hd">@' + esc(a.handle) + '</div>' +
         '<div class="fc">' + esc(a.focus) + '</div></div>' +
         '<a class="go" href="https://x.com/' + esc(a.handle) + '" target="_blank" rel="noopener">›</a></div>' +
-        '<details class="fold"><summary>做啥 · 怎么做 · 战绩</summary><div class="fold-body">' +
-        foldRows([['做啥', a.does], ['怎么做', a.how], ['战绩', a.record], ['注', a.note]]) +
+        '<details class="fold"><summary>履历</summary><div class="fold-body">' +
+        '<div class="cv-how"><span class="cv-k">做法</span><span class="cv-v">' + esc(a.howLine) + '</span></div>' +
+        (a.feats || []).map(function (f) {
+          return '<div class="cv-feat"><b>' + esc(f[0]) + '</b><span>' + esc(f[1]) + '</span></div>';
+        }).join('') +
         '</div></details></div>';
     }).join('');
     document.getElementById('voices-curated').innerHTML = CURATED_X_HANDLES.map(function (h) {
