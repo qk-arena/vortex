@@ -300,6 +300,13 @@ details.fold .fold-body p { margin: 4px 0; }
 .voice-blk .hd { font-size: 12px; line-height: 1.4; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .voice-blk .fc { font-size: 12px; line-height: 1.4; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .voice-blk .go { margin-left: auto; color: var(--weak); font-size: 16px; flex: none; }
+.voice-fold { display: block; }
+.voice-head { display: flex; align-items: center; gap: 10px; }
+.voice-head .who { flex: 1; }
+.voice-fold details.fold { margin-top: 8px; }
+.voice-fold .fold-body strong { color: var(--text-secondary); }
+.voice-blk .rk { font-size: 15px; font-weight: 800; color: var(--accent); min-width: 20px; text-align: center; flex: none; }
+.voice-blk .tp { font-size: 10.5px; font-weight: 600; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 0 6px; vertical-align: 2px; white-space: nowrap; }
 a.blk-link { display: block; color: inherit; }
 a.blk-link:active .voice-blk { border-color: var(--line-strong); }
 
@@ -405,13 +412,15 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
   <section class="view" id="view-voices">
     <div class="zhead"><h2>观点名单</h2><span class="en">Voices</span><span class="right">名单与公开主页</span></div>
     <div class="blk empty-blk">
-      <p>这一页只有名单：产品关注的 X 账号与公开主页链接。静态版<b style="color:var(--text-secondary)">不做每日扫描、不抓取也不生成任何观点内容</b>；点开任意一块是对方的 X 主页，观点真伪请到原页核对。名单来自产品注册表 voice-registry（静态数据）。</p>
+      <p>这一页只有名单：产品关注的 X 账号与公开主页链接。静态版<b style="color:var(--text-secondary)">不做每日扫描、不抓取也不生成任何观点内容</b>；块可展开看摘要，块右上角箭头是对方的 X 主页，观点真伪请到原页核对。名单来自产品注册表 voice-registry（静态数据）。</p>
     </div>
     <div class="zhead"><h2>关注名单</h2><span class="en">Followed</span><span class="right" id="voices-followed-count"></span></div>
-    <div class="grid grid-2" id="voices-followed" style="grid-template-columns:repeat(2,1fr)"></div>
+    <div class="grid grid-2" id="voices-followed" style="grid-template-columns:repeat(3,1fr)"></div>
     <div class="zhead"><h2>精选名单</h2><span class="en">Curated</span><span class="right" id="voices-curated-count"></span></div>
     <div class="grid grid-2" id="voices-curated" style="grid-template-columns:repeat(2,1fr)"></div>
-    <p class="foot-note">上榜不等于背书；本页不统计、不引用这些账号的任何发言。</p>
+    <div class="zhead"><h2>AI 与软件工具</h2><span class="en">AI &amp; Tools</span><span class="right" id="voices-ai-count"></span></div>
+    <div class="grid grid-2" id="voices-ai" style="grid-template-columns:repeat(3,1fr)"></div>
+    <p class="foot-note">上榜不等于背书；交易名单摘要来自公开记录审计，AI 栏粉丝数为公开数据，截至 2026-11-27。</p>
   </section>
 
   <!-- ================= 机会 SIGNALS ================= -->
@@ -3007,26 +3016,13 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
 
   /* ---------------- 观点页（voice-registry.ts 静态移植） ---------------- */
   var FOLLOWED_X_ACCOUNTS = [
-    { name: '魏志成', handle: 'coolish', focus: '加密交易 · 2013 入圈' },
-    { name: '超级幸运星', handle: 'luckybibiw1p', focus: '主流币 · 市场情绪' },
-    { name: '潘驴邓晓闲缺一', handle: 'JohnsonZ91127', focus: '主流币 · 周期观察' },
-    { name: '熹米周期轮动', handle: 'ximihoo1', focus: '周期轮动 · 资产配置' },
-    { name: '仲达说', handle: 'BitcoinZhong', focus: 'BTC · 宏观周期' },
-    { name: 'capitalnvest', handle: 'Capitalnvest', focus: '宏观 · 市场结构' },
-    { name: 'tinghu888', handle: 'TingHu888', focus: 'BTC · 趋势交易' },
-    { name: 'zy16881', handle: 'zy16881', focus: 'Crypto · 趋势观察' },
-    { name: '法师来咯', handle: 'LW158158158', focus: '山寨币 · 市场情绪' },
-    { name: 'cryptov', handle: 'CryptoV', focus: 'Crypto · 行情观察' },
-    { name: 'rocky', handle: 'Rocky_Bitcoin', focus: 'BTC · 周期交易' },
-    { name: 'jackyi', handle: 'Jackyi_ld', focus: '主流币 · 市场结构' },
-    { name: '周期手牛牛', handle: 'niuniu255431', focus: '周期 · 趋势波段' },
-    { name: '皮皮虾trader', handle: 'maswdwlwzz', focus: '短线执行 · 风险管理' },
-    { name: '大宇', handle: 'BTCdayu', focus: '行业观察 · 公开访谈' },
-    { name: '川沐', handle: 'xiaomucrypto', focus: 'Crypto · 宏观观察' },
-    { name: '带带带比特', handle: 'daidaibtc', focus: 'BTC · 行情复盘' },
-    { name: '孙宇晨', handle: 'justinsuntron', focus: 'TRON · 行业动态' },
-    { name: 'Donald Trump · 特朗普', handle: 'realDonaldTrump', focus: '美国政策 · Crypto' },
-    { name: '熬鹰', handle: 'thankUcrypto', focus: '合约实盘 · 带单交易' },
+    {"name":"魏志成","handle":"coolish","focus":"加密交易 · 2013 入圈","does":"只做BTC，合约中长线。BitMEX交易六年（2020–2026），2025年11月起转到Hyperliquid公开实盘。","how":"手动主观、图表驱动；金字塔式分批挂单，事前公布多空区间与资金配比（如多头约75%资金、2倍杠杆、空头目标区94,400–99,000），重仓位管理与回撤处理；公开只读API，全部历史成交任何人可逐笔下载核查；每年置顶汇总全年推文与交易感悟。","record":"GitHub公开账本（bwjoke/BTC-Trading-Since-2020）含其BitMEX账户2020-05-01至2026-07全部订单与成交（43,258笔订单），2020年起两年内1.8 BTC做到80+ BTC；BitMEX 11周年Legends官方页记其3年70倍收益（AlphaFox记为2020–2026六年54倍，口径不同但均公开可查）；2025-11-16起Hyperliquid以约1 BTC本金公开实盘，Coinbob/BlockBeats跟踪报道其挂单与持仓，2025-12初累计约+3,300美元。"},
+    {"name":"熬鹰","handle":"thankUcrypto","focus":"合约实盘 · 带单交易","does":"以币安永续合约为主战场，核心品种ETH、BTC、ZEC，并扩展到币安上的美股/商品永续（NVDA、MU、SPCX、原油等），多空都做，持仓中位约20小时，属日内到数日的波段交易。","how":"顺势与关键位分批建仓——下跌中在预设区间（如62,500→61,000）分段买入，区分「暴跌可抄、阴跌不碰」；盈利单拿得比亏损单久（中位22.6小时 vs 15.2小时）。","record":"Trade Replayer整理的其币安公开带单记录（2026-09-02至11-18）55段仓位中，40段完整净盈亏合计+992K USDT、胜率55%、盈亏比1.58，最大亏损单−302K也完整收录。但一笔2026-11-04 ETH空单+942K占全部净盈亏95%，去掉后其余39段合计仅约+50K；做空合计+1.01M、做多合计−15.4K。网传「从1,700美元做到千万」无法核实，不采信。"},
+    {"name":"川沐","handle":"xiaomustock","focus":"加密实盘 · 美股硬科技","does":"早年做加密（铭文、山寨合约、链上meme），2025年10月后明牌退出加密、转战美/港/A股AI硬科技，主仓存储（MU、海力士）与光通信（LITE、MRVL、COHR）。现主要发帖号为@xiaomustock（同一人）。","how":"加密期用交易量/市值量比、合约持仓与资金费率从庄家盘口反推强庄标的、顺涨幅榜做强势币；股票期顺产业链找供给瓶颈与寡头垄断环节重仓死拿，辅以LTCM式回撤防守和保留现金仓。","record":"2023年500美元做到100万美元（ORDI铭文期，实盘可查，Foresight News记载）；2025年做空一篮子山寨一个月1万美元做到约108万美元（跟单平台截图存档：资产$1,079,149、累计收益$1,080,606、总收益率6,952.40%、订阅者10,278人）；美股MU 118美元、LITE 97美元等推荐价与后续数倍涨幅有本人存档复盘可核（价格路径可公开行情核对）。反面：此前曾爆掉约2,000万；有网友质疑其部分喊单币后续收割、持仓卖出未同步跟买者，跟单风险真实存在。"},
+    {"name":"capitalnvest","handle":"Capitalnvest","focus":"BTC · 超大周期顶底","does":"只做BTC超大周期顶底（日文发帖，入市10年）。","how":"以减半周期时间轴提前一年以上公开给出顶/底时间窗口，置顶帖长期不变作证；底部区按「两轴」策略分批买入。","record":"2024年2月置顶预测2025年10月见顶、固定1年9个月后命中本轮约126,000的高点月份；2026年大底/约60,000抄底判断正在被跟踪验证。2020年持续喊买获10倍仅为其自述，未获独立核验；无交易所实盘PnL记录。"},
+    {"name":"GCR","handle":"GCRClassic","focus":"山寨做空 · 逆向交易","does":"加密永续/现货大级别方向交易，以山寨币做空和逆向仓位成名。","how":"逆大众情绪、在狂热顶部系统性做空山寨，耐心持有大仓位。","record":"2021–2022年多次登上FTX Top Traders排行榜前列并拿到最高一档总PnL（Gate Learn人物档案复盘）；2022年4月前后对LUNA的大额做空获利近一倍，另有与Do Kwon公开对赌LUNA一年内下跌、1,000万美元托管的公开记录（金额口径有不同版本）；被认为是其钱包0x37c在Hyperliquid充值316万USDC后组合达1,548万美元、浮盈约1,258万美元（+397%）（Spot On Chain链上监测，2024-12 HTX转载）。","note":"2023年初起基本停更；「1,000美元起家」等早期数字无法核实。价值在历史判断框架，不在实时喊单。"},
+    {"name":"Eugene","handle":"0xENAS","focus":"波段交易 · 公开复盘","does":"主流币＋山寨的流动性市场波段交易。","how":"月度公开复盘自己的交易与盈亏、预先写明止损位、只做风险收益比清晰的机会。","record":"账号设立初衷即公开透明化个人交易，100多个公开交易过的代币可逐一核对（PANews/CoinLive 2025-01报道）；2026-01-30公开重新做多BTC、止损设8万美元下方，1-31跌破后2-1发帖认止损离场；2026-03-16重新做多BTC/ETH、5-13 SOL多单止损离场，盈亏都公开留痕（第三方逐日对账）；专访含2021年5月曾回撤80%的自述败绩，记录不只报喜。","note":"2025年1月曾被指控利用VC身份内幕交易，本人逐条否认、无定论；2026年重心部分转向AI股票，加密发帖密度下降。"},
+    {"name":"Bluntz","handle":"SmartContracter","focus":"BTC/ETH · 技术面波段","does":"BTC、ETH及主流山寨的技术面波段交易。","how":"Elliott Wave＋摆动失败形态＋斐波那契0.618支撑，提前数月公开给出精确目标价并留帖为证。","record":"2018-06-23原帖（至今置顶）称BTC底部在正好3,200美元（±200），2018-12-15实际见底约3,156，误差内命中（NewsBTC/Bitcoinist/Daily Hodl多年反复引用复盘）；2022年被Daily Hodl以「准确预言2022年下跌的交易员」为题持续跟踪其后续喊单；2020-01-31「五浪上涨将突破14k」判断被NewsBTC报道，后于2020年中兑现至12k上方。","note":"成名作集中在2018–2022年，近年无公开实盘账本/链上钱包可核，观点价值大于可跟单价值；波浪计数主观性强，错单的媒体报道密度明显低于对单。"},
   ];
   var CURATED_X_HANDLES = [
     'PeterLBrandt', '_1woonomic', 'CryptoDonAlt', 'CryptoCred',
@@ -3034,20 +3030,52 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
     'LindaRaschke', 'markminervini', 'alphatrends', 'CryptoHayes', 'RaoulGMI',
     'krugermacro', 'Pentosh1', 'BigCheds', '_Checkmatey_', 'Phyrex_Ni',
   ];
+  var AI_X_ACCOUNTS = [
+    {"rank":1,"name":"Grok","handle":"grok","type":"官方","fans":"9.1M（约）","what":"xAI 的 AI 助手 Grok 的官方账号","strength":"与 X 平台原生绑定，入口即分发；榜上粉丝最高的纯 AI 产品账号"},
+    {"rank":2,"name":"Sam Altman","handle":"sama","type":"个人","fans":"646.6万","what":"OpenAI CEO，ChatGPT / GPT 系列背后的掌舵者","strength":"曾任 Y Combinator 总裁；把 OpenAI 从研究实验室做成消费级 AI 第一入口"},
+    {"rank":3,"name":"OpenAI","handle":"OpenAI","type":"官方","fans":"556.6万","what":"ChatGPT 与 GPT 模型的官方账号","strength":"消费级 AI 的默认入口品牌；发布节奏即行业新闻"},
+    {"rank":4,"name":"Andrej Karpathy","handle":"karpathy","type":"个人","fans":"447.5万","what":"AI 研究者/教育者，创办 Eureka Labs","strength":"OpenAI 创始成员、前 Tesla AI 总监；以 nanoGPT 等开源教学项目著称，TwitterScore 简介提及其在 Anthropic 预训练相关工作"},
+    {"rank":5,"name":"Claude","handle":"claudeai","type":"官方","fans":"208.9万","what":"Anthropic 旗下 Claude 模型/产品的官方账号","strength":"长文本与编程场景口碑最强的消费/开发者品牌之一"},
+    {"rank":6,"name":"Andrew Ng（吴恩达）","handle":"AndrewYNg","type":"个人","fans":"198.6万","what":"DeepLearning.AI 创始人、Coursera 联合创始人","strength":"AI 教育第一人，课程受众以千万计；其公开课定义了整代工程师的入门路径"},
+    {"rank":7,"name":"Demis Hassabis","handle":"demishassabis","type":"个人","fans":"196.8万","what":"Google DeepMind CEO","strength":"AlphaFold 负责人、诺贝尔化学奖得主；把深度学习做到科学突破级成果"},
+    {"rank":8,"name":"Anthropic","handle":"AnthropicAI","type":"官方","fans":"175万","what":"Claude 背后的 AI 公司官方账号","strength":"以 AI 安全定位做出头部模型公司；企业市场增长的主角之一"},
+    {"rank":9,"name":"Google DeepMind","handle":"GoogleDeepMind","type":"官方","fans":"1.6M（约）","what":"Google 旗下 AI 研究机构（Gemini、AlphaFold）官方账号","strength":"研究产能与算力规模行业顶级，Gemini 系列出自该体系"},
+    {"rank":10,"name":"Yann LeCun","handle":"ylecun","type":"个人","fans":"1.4M（约）","what":"Meta 首席 AI 科学家，图灵奖得主","strength":"卷积网络先驱；学术派影响力最大的个人账号之一"},
+  ];
   var voicesRendered = false;
+  function foldRows(pairs) {
+    return pairs.filter(function (p) { return p[1]; }).map(function (p) {
+      return '<p><strong>' + esc(p[0]) + '</strong> ' + esc(p[1]) + '</p>';
+    }).join('');
+  }
   function renderVoices() {
     if (voicesRendered) return;
     voicesRendered = true;
     document.getElementById('voices-followed-count').textContent = FOLLOWED_X_ACCOUNTS.length + ' 个账号';
     document.getElementById('voices-curated-count').textContent = CURATED_X_HANDLES.length + ' 个账号';
     document.getElementById('voices-followed').innerHTML = FOLLOWED_X_ACCOUNTS.map(function (a) {
-      return '<a class="blk voice-blk" href="https://x.com/' + esc(a.handle) + '" target="_blank" rel="noopener">' +
-        '<div class="who"><div class="nm">' + esc(a.name) + '</div><div class="hd">@' + esc(a.handle) + '</div>' +
-        '<div class="fc">' + esc(a.focus) + '</div></div><span class="go">›</span></a>';
+      return '<div class="blk voice-blk voice-fold">' +
+        '<div class="voice-head"><div class="who"><div class="nm">' + esc(a.name) + '</div><div class="hd">@' + esc(a.handle) + '</div>' +
+        '<div class="fc">' + esc(a.focus) + '</div></div>' +
+        '<a class="go" href="https://x.com/' + esc(a.handle) + '" target="_blank" rel="noopener">›</a></div>' +
+        '<details class="fold"><summary>做啥 · 怎么做 · 战绩</summary><div class="fold-body">' +
+        foldRows([['做啥', a.does], ['怎么做', a.how], ['战绩', a.record], ['注', a.note]]) +
+        '</div></details></div>';
     }).join('');
     document.getElementById('voices-curated').innerHTML = CURATED_X_HANDLES.map(function (h) {
       return '<a class="blk voice-blk" href="https://x.com/' + esc(h) + '" target="_blank" rel="noopener">' +
         '<div class="who"><div class="nm">@' + esc(h) + '</div><div class="fc">精选名单 · 公开主页</div></div><span class="go">›</span></a>';
+    }).join('');
+    var aiOff = AI_X_ACCOUNTS.filter(function (a) { return a.type === '官方'; }).length;
+    document.getElementById('voices-ai-count').textContent = '共 ' + AI_X_ACCOUNTS.length + ' 个账号 · 官方 ' + aiOff + ' · 个人 ' + (AI_X_ACCOUNTS.length - aiOff) + ' · 粉丝数截至 2026-11-27';
+    document.getElementById('voices-ai').innerHTML = AI_X_ACCOUNTS.map(function (a) {
+      return '<div class="blk voice-blk voice-fold">' +
+        '<div class="voice-head"><span class="rk">' + a.rank + '</span><div class="who"><div class="nm">' + esc(a.name) + ' <span class="tp">' + esc(a.type) + '</span></div><div class="hd">@' + esc(a.handle) + '</div>' +
+        '<div class="fc">粉丝 ' + esc(a.fans) + '</div></div>' +
+        '<a class="go" href="https://x.com/' + esc(a.handle) + '" target="_blank" rel="noopener">›</a></div>' +
+        '<details class="fold"><summary>做啥 · 强在哪</summary><div class="fold-body">' +
+        foldRows([['做啥', a.what], ['强在哪', a.strength]]) +
+        '</div></details></div>';
     }).join('');
   }
 
