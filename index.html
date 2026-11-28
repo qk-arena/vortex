@@ -401,6 +401,12 @@ a.blk-link:active .voice-blk { border-color: var(--line-strong); }
 .advice-blk { background: var(--panel-inset); border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px; margin-top: 10px; }
 /* 观察轮次提示带：观察模式的追踪卡置顶全宽明示，防止被误当正式交易计划 */
 .obs-band { border: 1px solid var(--accent); color: var(--accent); background: rgba(212, 222, 39, .07); border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; font-size: 12.5px; font-weight: 700; text-align: center; letter-spacing: .5px; }
+/* 罗盘参考（影子对照）：行样式与建议块一致；冲突只用黄绿描边+黄绿字标示，不用红色 */
+#plan-compass .a-row, .compass-slot .a-row { font-size: 12.5px; color: var(--text-secondary); margin-top: 5px; line-height: 1.55; }
+#plan-compass .a-row b, .compass-slot .a-row b { color: var(--text); }
+.compass-slot { background: var(--panel-inset); border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px; margin-top: 10px; }
+.compass-conflict { border-color: var(--accent) !important; }
+.compass-conflict-line { color: var(--accent) !important; font-weight: 700; }
 .advice-blk .a-row { font-size: 12.5px; color: var(--text-secondary); margin-top: 5px; line-height: 1.55; }
 .advice-blk .a-row b { color: var(--text); }
 .round-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -2364,6 +2370,10 @@ img.pava { object-fit: cover; }
     html += '<div class="zhead"><h2>趋势分析</h2><span class="en">Trend</span><span class="right">日线 / 周线 / 月线 · 机械规则</span></div>' +
       '<div class="blk" id="plan-trend"><p class="progress-line">正在读取多周期 K 线与资金指标…</p></div>';
 
+    /* 罗盘参考（多空罗盘影子对照，异步填充；只展示 + 留档冻结，不进评分/门槛/排序） */
+    html += '<div class="zhead"><h2>罗盘参考</h2><span class="en">Compass</span><span class="right">多空罗盘 · 影子对照</span></div>' +
+      '<div class="blk" id="plan-compass"><p class="progress-line">正在读取多空罗盘…</p></div>';
+
     /* 未来走势展望 */
     html += outlookHtml(plan, actionable);
     return html;
@@ -2380,6 +2390,129 @@ img.pava { object-fit: cover; }
     }
     root.innerHTML = planDetailHtml(plan, Date.now());
     loadPlanTrend(plan);
+    loadPlanCompass(plan);
+  }
+
+  /* ---------------- 多空罗盘参考（影子对照：只展示 + 留档冻结，绝不回写评分/门槛/排序） ----------------
+   * 数据：多空罗盘静态站发布的 data/current.json（最新方向快照）+ data/backtest.json
+   * （同引擎历史回测命中率），双源（ofldk.pages.dev 主、GitHub 镜像备），浏览器直读。
+   * 罗盘口径：只用已收盘 K 线；方向由动量/趋势两组因子投票合成（偏多/偏空/中性）；
+   * 命中率 = 同标的、同周期、同方向、下一根收盘结算的历史回测，样本 <30 按罗盘规矩不显示百分比。
+   * 周期映射（罗盘正式周期里取最接近的）：日线计划→罗盘日线；12 小时计划→罗盘 4 小时
+   * （罗盘无 12 小时周期，4 小时比日线更近）；AI 追踪轮次（90 天大波段）→罗盘周线。 */
+  var COMPASS_BASES = ['https://ofldk.pages.dev', 'https://qk-arena.github.io/duokong-compass'];
+  var COMPASS_TF_LABEL = { '4h': '4 小时', '1d': '日线', '1w': '周线', '1M': '月线' };
+  var compassPromise = null;   /* 进行中的加载（两文件都拿到才算成功，任一失败整体降级） */
+  var compassData = undefined; /* undefined=未加载 · null=加载失败 · {current, backtest} */
+  function loadCompass() {
+    if (compassData !== undefined) return Promise.resolve(compassData);
+    if (compassPromise) return compassPromise;
+    function get(file, ok) {
+      return VX.firstOfficialJson(COMPASS_BASES.map(function (b) { return b + '/data/' + file; }), ok, 9000)
+        .then(function (r) { return r ? r.payload : null; })
+        .catch(function () { return null; });
+    }
+    compassPromise = Promise.all([
+      get('current.json', function (v) { return v && Array.isArray(v.symbols); }),
+      get('backtest.json', function (v) { return v && v.symbols && typeof v.symbols === 'object'; }),
+    ]).then(function (r) {
+      compassData = (r[0] && r[1]) ? { current: r[0], backtest: r[1] } : null;
+      return compassData;
+    });
+    return compassPromise;
+  }
+  /* 取某标的在罗盘某周期的读数；未覆盖/周期缺失返回 null（失败与未覆盖由 compassData 区分） */
+  function compassReading(symbol, tfKey) {
+    if (!compassData) return null;
+    var entry = null;
+    (compassData.current.symbols || []).forEach(function (s) { if (s.symbol === symbol) entry = s; });
+    if (!entry || !entry.timeframes) return null;
+    var tf = entry.timeframes[tfKey];
+    if (!tf || !tf.call_dir) return null;
+    var btSym = compassData.backtest.symbols[symbol];
+    var bt = btSym ? btSym[tfKey] : null;
+    var hit = null;
+    if (bt && bt.rates && bt.rates[tf.call_dir]) {
+      var rr = bt.rates[tf.call_dir];
+      hit = { n: rr.n, hits: rr.hits, rate: rr.n >= 30 ? rr.rate : null };
+    }
+    return {
+      tf: tfKey, dir: tf.call_dir, momentumDir: tf.momentum_dir || null, trendDir: tf.trend_dir || null,
+      mvPos: tf.momentum_votes ? tf.momentum_votes.pos : null, mvNeg: tf.momentum_votes ? tf.momentum_votes.neg : null,
+      tvPos: tf.trend_votes ? tf.trend_votes.pos : null, tvNeg: tf.trend_votes ? tf.trend_votes.neg : null,
+      hit: hit, generatedBj: compassData.current.generated_at_bj || null,
+    };
+  }
+  function compassRelation(vxDir, cDir) {
+    if (vxDir === '做多') return cDir === '偏多' ? 'agree' : cDir === '偏空' ? 'conflict' : 'neutral';
+    if (vxDir === '做空') return cDir === '偏空' ? 'agree' : cDir === '偏多' ? 'conflict' : 'neutral';
+    return 'neutral';
+  }
+  function compassRowsHtml(reading, vxDir) {
+    var rel = compassRelation(vxDir, reading.dir);
+    var dirCls = reading.dir === '偏多' ? 'long' : reading.dir === '偏空' ? 'short' : 'flat';
+    var html = '<div class="a-row">罗盘方向（' + esc(COMPASS_TF_LABEL[reading.tf] || reading.tf) + '） <span class="badge ' + dirCls + '">' + esc(reading.dir) + '</span>' +
+      ' · 动量 ' + esc(reading.momentumDir || '—') + ' · 趋势 ' + esc(reading.trendDir || '—') + '</div>';
+    html += '<div class="a-row">因子投票：动量 多 <b>' + (reading.mvPos == null ? '—' : reading.mvPos) + '</b> / 空 <b>' + (reading.mvNeg == null ? '—' : reading.mvNeg) + '</b>' +
+      ' · 趋势 多 <b>' + (reading.tvPos == null ? '—' : reading.tvPos) + '</b> / 空 <b>' + (reading.tvNeg == null ? '—' : reading.tvNeg) + '</b></div>';
+    if (reading.hit) {
+      html += reading.hit.rate != null
+        ? '<div class="a-row">罗盘同向历史命中率 <b>' + reading.hit.rate + '%</b>（样本 ' + reading.hit.n + ' · 命中 ' + reading.hit.hits + '）</div>'
+        : '<div class="a-row">罗盘同向历史命中率：样本不足（样本 ' + reading.hit.n + '，&lt;30 不显示百分比）</div>';
+    }
+    if (rel === 'conflict') html += '<div class="a-row compass-conflict-line">与罗盘方向冲突</div>';
+    else if (rel === 'agree') html += '<div class="a-row">与本条方向一致</div>';
+    else if (reading.dir === '中性') html += '<div class="a-row">罗盘当前中性，无方向可对照</div>';
+    html += '<p class="plan-meta">口径：多空罗盘' + (reading.generatedBj ? '数据 ' + esc(reading.generatedBj) + '（北京时间），' : '，') +
+      '只用已收盘 K 线；命中率是罗盘同引擎历史回测（下一根收盘结算），是历史信号命中率、不是未来涨跌概率。本块只作对照与留档，不改本条的评分、门槛与排序。</p>';
+    return html;
+  }
+  function compassInnerHtml(symbol, tfKey, vxDir) {
+    if (compassData === null) return '<p class="fact-line" style="margin:0">罗盘数据暂不可用</p>';
+    var reading = compassReading(symbol, tfKey);
+    if (!reading) return '<p class="fact-line" style="margin:0">罗盘未覆盖该标的</p>';
+    return compassRowsHtml(reading, vxDir);
+  }
+  function compassTfForPlan(plan) { return plan.horizon === '1d' ? '1d' : '4h'; }
+  var COMPASS_TF_FOR_ROUND = '1w';
+  /* 冻结用读数（精简形，随建议留档的指标快照一并存档）：拿不到记 null，不编造 */
+  function compassFreeze(symbol, tfKey, vxDir) {
+    var reading = compassReading(symbol, tfKey);
+    if (!reading) return null;
+    return {
+      tf: reading.tf, dir: reading.dir, momentumDir: reading.momentumDir, trendDir: reading.trendDir,
+      votes: { momentum: [reading.mvPos, reading.mvNeg], trend: [reading.tvPos, reading.tvNeg] },
+      hitRate: reading.hit ? reading.hit.rate : null, hitN: reading.hit ? reading.hit.n : null,
+      relation: compassRelation(vxDir, reading.dir), generatedBj: reading.generatedBj,
+    };
+  }
+  function loadPlanCompass(plan) {
+    if (!document.getElementById('plan-compass')) return;
+    loadCompass().then(function () {
+      var box = document.getElementById('plan-compass');
+      if (!box) return;
+      var tfKey = compassTfForPlan(plan);
+      box.innerHTML = compassInnerHtml(plan.symbol, tfKey, plan.direction);
+      var reading = compassReading(plan.symbol, tfKey);
+      if (reading && compassRelation(plan.direction, reading.dir) === 'conflict') box.classList.add('compass-conflict');
+    });
+  }
+  /* 轮次详情里的罗盘槽位（roundCard 非卡面模式埋点，渲染后统一回填） */
+  function hydrateCompassSlots() {
+    var slots = document.querySelectorAll('.compass-slot:not([data-done])');
+    if (!slots.length) return;
+    slots.forEach(function (s) { s.setAttribute('data-done', '1'); });
+    loadCompass().then(function () {
+      document.querySelectorAll('.compass-slot[data-done="1"]').forEach(function (s) {
+        if (s.getAttribute('data-filled')) return;
+        s.setAttribute('data-filled', '1');
+        var sym = s.getAttribute('data-csym'), dir = s.getAttribute('data-cdir');
+        s.innerHTML = '<div class="zlabel"><span class="v-accent" style="font-weight:700">罗盘参考</span><span style="margin-left:auto">周线对照</span></div>' +
+          compassInnerHtml(sym, COMPASS_TF_FOR_ROUND, dir);
+        var reading = compassReading(sym, COMPASS_TF_FOR_ROUND);
+        if (reading && compassRelation(dir, reading.dir) === 'conflict') s.classList.add('compass-conflict');
+      });
+    });
   }
 
   /* ---------------- 趋势分析（多周期机械规则 + 资金指标，纯展示层） ----------------
@@ -2503,7 +2636,12 @@ img.pava { object-fit: cover; }
       html += '<div class="trend-concl">综合（机械合成）：<b>' + esc(conclusion) + '</b></div>';
       html += '<p class="plan-meta">口径：方向 = 收盘对 MA20 + 近 5 根高低点结构；净流入为 taker 口径 24H 合计；资金费率拥挤阈值 ±0.05%。本块纯展示，不回写评分。</p>';
       box.innerHTML = html;
-      maybeArchiveAdvice(plan, snapshot);
+      /* 罗盘读数随本条建议一并冻结进留档：等罗盘加载收口后再留档；
+       * 罗盘缺席/未覆盖时 compass 记 null，照常留档，绝不挡住原留档。 */
+      loadCompass().then(function () {
+        snapshot.compass = compassFreeze(plan.symbol, compassTfForPlan(plan), plan.direction);
+        maybeArchiveAdvice(plan, snapshot);
+      });
     });
   }
 
@@ -2538,6 +2676,7 @@ img.pava { object-fit: cover; }
           confirmationPrice: plan.confirmationPrice, stopLoss: plan.stopLoss, tp1: plan.tp1, tp2: plan.tp2,
           invalidation: plan.invalidation, validUntil: plan.validUntil, planClosedAt: plan.closedAt,
           indicators: snapshot, conclusion: snapshot.conclusion,
+          compass: snapshot.compass || null,
         },
       }).then(function (res) {
         if (res && (res.archived || res.duplicate)) {
@@ -5695,6 +5834,7 @@ img.pava { object-fit: cover; }
     var cached = coinTrackCache[symbol];
     if (cached && cached.status === 'done') {
       if (box) box.innerHTML = coinTrackHtml(cached.data);
+      hydrateCompassSlots();
       var src0 = document.getElementById('ai-source');
       if (src0) src0.textContent = '服务端账本';
       return;
@@ -5712,6 +5852,7 @@ img.pava { object-fit: cover; }
       if (S.route === 'coin' && S.coin && S.coin.symbol === symbol && S.coin.tab === 'ai') {
         var b2 = document.getElementById('ai-server');
         if (b2) b2.innerHTML = coinTrackHtml(data);
+        hydrateCompassSlots();
         var src = document.getElementById('ai-source');
         if (src) src.textContent = '服务端账本';
       }
@@ -6168,7 +6309,8 @@ img.pava { object-fit: cover; }
       '<div class="round-prices">推送价 <b>' + fmtPrice(round.entry_price) + '</b> · 现价 <b>' + fmtPrice(round.last_price) + '</b> · 推送后 ' + retHtml +
       (round.ai_score != null ? ' · AI评分 <b>' + esc(round.ai_score) + '</b>' : '') + '</div>' +
       '<div class="track-time">上榜 <b>' + fmtDayTime(entryTs) + '</b>（北京时间）' + (dur ? ' · 已跟踪 ' + dur : '') + '</div>' +
-      adviceHtml(round.advice, face) + '</div>';
+      adviceHtml(round.advice, face) +
+      (face ? '' : '<div class="compass-slot" data-csym="' + esc(round.symbol) + '" data-cdir="' + (round.direction === 'short' ? '做空' : '做多') + '"><p class="progress-line">正在读取多空罗盘…</p></div>') + '</div>';
   }
   function trackingBoardHtml(data) {
     var board = data.board, history = data.history;
@@ -6254,6 +6396,9 @@ img.pava { object-fit: cover; }
         '<span class="dim">' + (rec.horizon === '1d' ? '日线' : '12 小时') + ' · 评分 ' + (rec.score == null ? '—' : rec.score) + (rec.actionable ? ' · 可执行' : ' · 精选观察') + '</span>' +
         '<span class="dim">发行 ' + fmtDayTime(Date.parse(rec.issuedAt)) + ' ' + fmtClock(Date.parse(rec.issuedAt)) + '</span>' +
         '<span class="dim">发行价 ' + fmtPrice(rec.priceAtIssue) + (rec.confirmationPrice ? ' · 确认价 ' + fmtPrice(rec.confirmationPrice) : '') + '</span>' +
+        (rec.compass ? '<span class="dim">罗盘 ' + esc(COMPASS_TF_LABEL[rec.compass.tf] || rec.compass.tf || '') + ' ' + esc(rec.compass.dir || '') +
+          (rec.compass.hitRate != null ? ' · 同向命中率 ' + rec.compass.hitRate + '%（样本 ' + rec.compass.hitN + '）' : '') +
+          (rec.compass.relation === 'conflict' ? ' · 与罗盘方向冲突' : rec.compass.relation === 'agree' ? ' · 与罗盘一致' : '') + '</span>' : '') +
         '<span class="dim advice-now" data-sym="' + esc(rec.symbol) + '" data-issue="' + rec.priceAtIssue + '" data-dir="' + esc(rec.direction) + '">现价 …</span>' +
         '<span class="r advice-move">…</span></div>';
     }).join('') + '</div>';
